@@ -6,4 +6,4 @@ This repository serves as a code and results repository for the computational bi
 
 ### Segmentation
 
-I used [3DSlicer](https://www.slicer.org) version 3.12.2 for this assignment.  
+I used [3DSlicer](https://www.slicer.org) version 5.12.2 for this assignment.  
