@@ -27,3 +27,12 @@ Broadly, the following steps were taken to segment the airways:
 ### Physical Boundaries
 
 During the segmentation process, the caps of the airways were defined as physical boundary surfaces.
+
+### Running the segmentation scripts
+
+in the Slicer Python console, run the following command:
+```
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
+
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
+```
