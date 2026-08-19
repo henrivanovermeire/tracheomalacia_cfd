@@ -13,3 +13,17 @@ Make sure to either install from source or extract the Linux archive in a place 
 
 
 I used [3DSlicer](https://www.slicer.org) version 5.12.2 for this assignment.  
+
+### Approach to segmentation
+
+Broadly, the following steps were taken to segment the airways:
+    1. Load the DICOM data
+    2. Define seed points
+    3. Check suitable Hounsfield unit range
+    4. Use the grow algorithm to segment the airways
+    5. calculate the centerline of the airways using VMTK
+    6. cut along the calculated centerlines to restrict the model to the larger airways only
+
+### Physical Boundaries
+
+During the segmentation process, the caps of the airways were defined as physical boundary surfaces.
