@@ -1,31 +1,19 @@
 import slicer
 import vtk
 from DICOMLib import DICOMUtils
-import 
-
+import json
+import pathlib
 # ============================================================
-# PARAMETERS
+# LOAD PARAMETERS
 # ============================================================
 
-source_folder = (
-    "/home/hvoverme/tracheomalacia_cfd/"
-    "segmentation/source/DICOM_postop"
-)
+project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-# ------------------------------------------------------------
-# Airways HU range
-# ------------------------------------------------------------
+source_folder = project_path / "segmentation" / "source" / "DICOM_postop"
 
-airway_lower_HU = -1500
-airway_upper_HU = -650
-
-# ------------------------------------------------------------
-# Lung HU range
-# ------------------------------------------------------------
-
-lung_lower_HU = -900
-lung_upper_HU = -650
-
+setting_path = project_path / "segmentation" / "assets" / "preop" / "segmentation_settings.json"
+with open(setting_path , "r") as seg_setting_file:
+    seg_setting = json.load(seg_setting_file)
 
 # ============================================================
 # SEEDS
@@ -323,8 +311,8 @@ airway_grow.SetInputData(
 )
 
 airway_grow.ThresholdBetween(
-    airway_lower_HU,
-    airway_upper_HU
+    seg_setting["HU_RANGES"][0]["min"], #TODO: refactor this and originating file; list structure is not optimal
+    seg_setting["HU_RANGES"][0]["max"]
 )
 
 
@@ -574,4 +562,3 @@ pos = [0, 0, 0]
 node.GetNthControlPointPositionWorld(0, pos)
 
 slicer.app.layoutManager().threeDWidget(0).threeDView().cameraNode().SetFocalPoint(pos)
-
