@@ -19,21 +19,49 @@ with open(setting_path , "r") as seg_setting_file:
 # SEEDS
 # ============================================================
 
-# All coordinates are RAS coordinates.
-#
-# Original markup coordinates were LPS, so X and Y have been
-# sign-flipped to obtain RAS.
+seed_path = project_path / "segmentation" / "assets" / "postop" / "AirwaySeed.json"
+
+
+def load_seed_ras_from_markups(json_path, point_index=0):
+    """Load a control point position from a 3D Slicer markups fiducial
+    JSON file and return it as RAS coordinates.
+
+    Slicer markups JSON files store the coordinate system used for the
+    control point positions in the "coordinateSystem" field of the
+    markup (typically "LPS" or "RAS"). This function converts LPS
+    positions to RAS by negating the X and Y components (Z is
+    unchanged), and passes RAS positions through unchanged.
+    """
+    with open(json_path, "r") as seed_file:
+        data = json.load(seed_file)
+
+    markup = data["markups"][0]
+    position = markup["controlPoints"][point_index]["position"]
+    coordinate_system = markup.get("coordinateSystem", "LPS")
+
+    if coordinate_system == "LPS":
+        x, y, z = position
+        ras = [-x, -y, z]
+    elif coordinate_system == "RAS":
+        ras = list(position)
+    else:
+        raise ValueError(
+            f"Unsupported coordinate system '{coordinate_system}' "
+            f"in markups file: {json_path}"
+        )
+
+    return [float(v) for v in ras]
 
 
 # ------------------------------------------------------------
 # Airways seed
 # ------------------------------------------------------------
 
-airway_seed_RAS = [
-    5.870349611295694,
-    108.31885395681064,
-    1327.7000000000019
-]
+# Loaded from the markups JSON file below. The markup coordinates
+# are stored in LPS and converted to RAS (X and Y sign-flipped,
+# Z unchanged) by load_seed_ras_from_markups().
+
+airway_seed_RAS = load_seed_ras_from_markups(seed_path)
 
 # ============================================================
 # LOAD DICOM
