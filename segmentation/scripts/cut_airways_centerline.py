@@ -1,0 +1,785 @@
+import json
+import pathlib
+import re
+
+import slicer
+import vtk
+
+# ============================================================
+# OPTIONAL VMTK IMPORTS
+# ============================================================
+
+vtkvmtk = None
+vtkvmtkComputationalGeometry = None
+vtkvmtkMisc = None
+
+try:
+    from vmtk import vtkvmtk
+except ImportError:
+    vtkvmtk = None
+
+try:
+    import vtkvmtkComputationalGeometryPython as vtkvmtkComputationalGeometry
+except ImportError:
+    vtkvmtkComputationalGeometry = None
+
+try:
+    import vtkvmtkMiscPython as vtkvmtkMisc
+except ImportError:
+    vtkvmtkMisc = None
+
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
+
+endpoints_path = (
+    project_path / "segmentation" / "assets" / "postop" / "CenterlineEndpoints.json"
+)
+
+EXTENSION_RATIO = 10.0
+EXTENSION_LENGTH = 1.0
+TRANSITION_RATIO = 0.25
+SIGMA = 1.0
+TARGET_NUMBER_OF_BOUNDARY_POINTS = 50
+CENTERLINE_NORMAL_ESTIMATION_DISTANCE_RATIO = 1.0
+WALL_ENTITY_ID = 1
+BOUNDARY_IDS_PATH = (
+    project_path / "segmentation" / "assets" / "postop" / "AirwayCFDBoundaries.json"
+)
+
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+def new_vmtk_instance(class_name):
+
+    modules = [
+        vtkvmtk,
+        vtkvmtkComputationalGeometry,
+        vtkvmtkMisc,
+    ]
+
+    for module in modules:
+        if module is not None and hasattr(module, class_name):
+            return getattr(module, class_name)()
+
+    raise RuntimeError(
+        f"Could not find VMTK class '{class_name}'. "
+        "Make sure the SlicerVMTK extension is installed and loaded."
+    )
+
+
+def remove_node_if_present(node_name):
+
+    try:
+        existing_node = slicer.util.getNode(node_name)
+    except Exception:
+        existing_node = None
+
+    if existing_node is not None:
+        slicer.mrmlScene.RemoveNode(existing_node)
+
+
+def normalize(vector):
+
+    norm = vtk.vtkMath.Norm(vector)
+
+    if norm < 1e-12:
+        raise ValueError("Cannot normalize zero-length vector.")
+
+    return [vector[0] / norm, vector[1] / norm, vector[2] / norm]
+
+
+def subtract(a, b):
+    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+
+
+def distance2(a, b):
+    return vtk.vtkMath.Distance2BetweenPoints(a, b)
+
+
+def deep_copy_polydata(poly_data):
+
+    copy = vtk.vtkPolyData()
+    copy.DeepCopy(poly_data)
+    return copy
+
+
+def clean_polydata(poly_data):
+
+    cleaner = vtk.vtkCleanPolyData()
+    cleaner.SetInputData(poly_data)
+    cleaner.Update()
+
+    triangle_filter = vtk.vtkTriangleFilter()
+    triangle_filter.SetInputConnection(cleaner.GetOutputPort())
+    triangle_filter.PassLinesOff()
+    triangle_filter.PassVertsOff()
+    triangle_filter.Update()
+
+    normals = vtk.vtkPolyDataNormals()
+    normals.SetInputConnection(triangle_filter.GetOutputPort())
+    normals.SetAutoOrientNormals(1)
+    normals.SetFlipNormals(0)
+    normals.SetConsistency(1)
+    normals.SplittingOff()
+    normals.Update()
+
+    return deep_copy_polydata(normals.GetOutput())
+
+
+def largest_region(poly_data):
+
+    connectivity = vtk.vtkPolyDataConnectivityFilter()
+    connectivity.SetInputData(poly_data)
+    connectivity.SetExtractionModeToLargestRegion()
+    connectivity.Update()
+
+    geometry = vtk.vtkGeometryFilter()
+    geometry.SetInputConnection(connectivity.GetOutputPort())
+    geometry.Update()
+
+    return deep_copy_polydata(geometry.GetOutput())
+
+
+def control_point_to_ras(control_point, coordinate_system):
+
+    position = control_point["position"]
+
+    if coordinate_system == "LPS":
+        x, y, z = position
+        return [-x, -y, z]
+    if coordinate_system == "RAS":
+        return list(position)
+
+    raise ValueError(
+        f"Unsupported coordinate system '{coordinate_system}' "
+        f"in markups file: {endpoints_path}"
+    )
+
+
+def ensure_endpoints_node():
+
+    try:
+        return slicer.util.getNode("CenterlineEndpoints")
+    except Exception:
+        pass
+
+    with open(endpoints_path, "r") as endpoints_file:
+        endpoints_data = json.load(endpoints_file)
+
+    endpoints_markup_data = endpoints_data["markups"][0]
+    coordinate_system = endpoints_markup_data.get("coordinateSystem", "LPS")
+    control_points = endpoints_markup_data["controlPoints"]
+
+    if not control_points:
+        raise RuntimeError(
+            f"No control points found in {endpoints_path}."
+        )
+
+    endpoints_node = slicer.mrmlScene.AddNewNodeByClass(
+        "vtkMRMLMarkupsFiducialNode",
+        "CenterlineEndpoints"
+    )
+
+    for control_point in control_points:
+        point_ras = control_point_to_ras(control_point, coordinate_system)
+        point_label = control_point.get("label", "CenterlineEndpoint")
+        point_selected = control_point.get("selected", True)
+
+        point_index = endpoints_node.AddControlPoint(
+            point_ras[0],
+            point_ras[1],
+            point_ras[2]
+        )
+
+        endpoints_node.SetNthControlPointLabel(point_index, point_label)
+        endpoints_node.SetNthControlPointSelected(point_index, point_selected)
+
+    endpoints_node.SetDisplayVisibility(True)
+
+    return endpoints_node
+
+
+def get_airway_surface_polydata():
+
+    segmentation_node = slicer.util.getNode("AirwayLungSegmentation")
+    segmentation = segmentation_node.GetSegmentation()
+    airways_segment_id = segmentation.GetSegmentIdBySegmentName("Airways")
+
+    if not airways_segment_id:
+        raise RuntimeError(
+            "Airways segment was not found in AirwayLungSegmentation."
+        )
+
+    segmentation_node.CreateClosedSurfaceRepresentation()
+
+    poly_data = vtk.vtkPolyData()
+    segmentation_node.GetClosedSurfaceRepresentation(
+        airways_segment_id,
+        poly_data
+    )
+
+    if poly_data.GetNumberOfPoints() == 0:
+        raise RuntimeError("Airways closed surface is empty.")
+
+    return segmentation_node, airways_segment_id, deep_copy_polydata(poly_data)
+
+
+def get_endpoint_positions(markups_node):
+
+    positions = []
+
+    for point_index in range(markups_node.GetNumberOfControlPoints()):
+        position = [0.0, 0.0, 0.0]
+        markups_node.GetNthControlPointPositionWorld(point_index, position)
+        positions.append(position)
+
+    return positions
+
+
+def estimate_inward_tangent(network_poly_data, endpoint_position):
+
+    best_distance2 = float("inf")
+    best_tangent = None
+    best_anchor = None
+
+    for cell_index in range(network_poly_data.GetNumberOfCells()):
+        cell = network_poly_data.GetCell(cell_index)
+        point_ids = cell.GetPointIds()
+        number_of_ids = point_ids.GetNumberOfIds()
+
+        if number_of_ids < 2:
+            continue
+
+        start_point = network_poly_data.GetPoint(point_ids.GetId(0))
+        next_point = network_poly_data.GetPoint(point_ids.GetId(1))
+        end_point = network_poly_data.GetPoint(point_ids.GetId(number_of_ids - 1))
+        prev_point = network_poly_data.GetPoint(point_ids.GetId(number_of_ids - 2))
+
+        start_distance2 = distance2(endpoint_position, start_point)
+        if start_distance2 < best_distance2:
+            best_distance2 = start_distance2
+            best_anchor = list(start_point)
+            best_tangent = normalize(subtract(next_point, start_point))
+
+        end_distance2 = distance2(endpoint_position, end_point)
+        if end_distance2 < best_distance2:
+            best_distance2 = end_distance2
+            best_anchor = list(end_point)
+            best_tangent = normalize(subtract(prev_point, end_point))
+
+    if best_tangent is None:
+        raise RuntimeError(
+            "Failed to estimate an inward tangent from the network model."
+        )
+
+    return best_anchor, best_tangent
+
+
+def clip_surface_with_plane_keep_larger_piece(surface_poly_data, origin, normal):
+
+    plane = vtk.vtkPlane()
+    plane.SetOrigin(origin)
+    plane.SetNormal(normal)
+
+    outputs = []
+
+    for inside_out in [False, True]:
+        clipper = vtk.vtkClipPolyData()
+        clipper.SetInputData(surface_poly_data)
+        clipper.SetClipFunction(plane)
+        if inside_out:
+            clipper.InsideOutOn()
+        else:
+            clipper.InsideOutOff()
+        clipper.GenerateClippedOutputOff()
+        clipper.Update()
+
+        clipped = largest_region(clean_polydata(clipper.GetOutput()))
+        outputs.append(clipped)
+
+    outputs = [poly for poly in outputs if poly.GetNumberOfPoints() > 0]
+
+    if not outputs:
+        raise RuntimeError("Plane clipping removed the entire airway surface.")
+
+    outputs.sort(key=lambda poly: poly.GetNumberOfPoints(), reverse=True)
+    return outputs[0]
+
+
+def add_model_node(name, poly_data, color, opacity=1.0, line_width=None):
+
+    remove_node_if_present(name)
+
+    model_node = slicer.mrmlScene.AddNewNodeByClass(
+        "vtkMRMLModelNode",
+        name
+    )
+    model_node.SetAndObserveMesh(poly_data)
+    model_node.CreateDefaultDisplayNodes()
+    model_node.GetDisplayNode().SetColor(*color)
+    model_node.GetDisplayNode().SetOpacity(opacity)
+
+    if line_width is not None:
+        model_node.GetDisplayNode().SetLineWidth(line_width)
+
+    model_node.SetDisplayVisibility(True)
+    return model_node
+
+
+def to_patch_name(label):
+
+    patch_name = re.sub(r"[^0-9A-Za-z_]+", "_", label.strip())
+    patch_name = re.sub(r"_+", "_", patch_name).strip("_")
+    patch_name = patch_name.lower()
+
+    if not patch_name:
+        patch_name = "boundary"
+
+    if patch_name[0].isdigit():
+        patch_name = f"patch_{patch_name}"
+
+    return patch_name
+
+
+def extract_boundaries(boundary_surface_poly_data):
+
+    boundary_extractor = new_vmtk_instance("vtkvmtkPolyDataBoundaryExtractor")
+    boundary_extractor.SetInputData(boundary_surface_poly_data)
+    boundary_extractor.Update()
+
+    boundaries = deep_copy_polydata(boundary_extractor.GetOutput())
+
+    if boundaries.GetNumberOfCells() == 0:
+        raise RuntimeError("No open boundaries were found on the airway surface.")
+
+    return boundaries
+
+
+def boundary_cell_barycenter(boundaries_poly_data, cell_index):
+
+    points = boundaries_poly_data.GetCell(cell_index).GetPoints()
+    barycenter = [0.0, 0.0, 0.0]
+
+    if vtkvmtk is not None and hasattr(vtkvmtk, "vtkvmtkBoundaryReferenceSystems"):
+        vtkvmtk.vtkvmtkBoundaryReferenceSystems.ComputeBoundaryBarycenter(
+            points,
+            barycenter
+        )
+        return barycenter
+
+    number_of_points = points.GetNumberOfPoints()
+
+    for point_index in range(number_of_points):
+        point = points.GetPoint(point_index)
+        barycenter[0] += point[0]
+        barycenter[1] += point[1]
+        barycenter[2] += point[2]
+
+    barycenter[0] /= number_of_points
+    barycenter[1] /= number_of_points
+    barycenter[2] /= number_of_points
+
+    return barycenter
+
+
+def assign_boundary_names(boundaries_poly_data, endpoints_node):
+
+    endpoint_info = []
+
+    for point_index in range(endpoints_node.GetNumberOfControlPoints()):
+        position = [0.0, 0.0, 0.0]
+        endpoints_node.GetNthControlPointPositionWorld(point_index, position)
+        label = endpoints_node.GetNthControlPointLabel(point_index)
+        endpoint_info.append(
+            {
+                "label": label,
+                "patch_name": to_patch_name(label),
+                "position": position,
+            }
+        )
+
+    boundary_info = []
+    remaining_indices = set(range(len(endpoint_info)))
+
+    for boundary_id in range(boundaries_poly_data.GetNumberOfCells()):
+        barycenter = boundary_cell_barycenter(boundaries_poly_data, boundary_id)
+
+        if not remaining_indices:
+            raise RuntimeError(
+                "More open boundaries were found than available endpoint labels."
+            )
+
+        matched_index = min(
+            remaining_indices,
+            key=lambda idx: distance2(barycenter, endpoint_info[idx]["position"])
+        )
+        remaining_indices.remove(matched_index)
+
+        boundary_info.append(
+            {
+                "boundary_id": boundary_id,
+                "entity_id": WALL_ENTITY_ID + 1 + boundary_id,
+                "label": endpoint_info[matched_index]["label"],
+                "patch_name": endpoint_info[matched_index]["patch_name"],
+                "barycenter_ras": barycenter,
+            }
+        )
+
+    return boundary_info
+
+
+def set_wall_and_cap_entity_ids(poly_data, array_name):
+
+    entity_ids_array = poly_data.GetCellData().GetArray(array_name)
+
+    if entity_ids_array is None:
+        raise RuntimeError(
+            f"Expected cell data array '{array_name}' on capped surface."
+        )
+
+    for cell_index in range(poly_data.GetNumberOfCells()):
+        entity_id = int(round(entity_ids_array.GetTuple1(cell_index)))
+        if entity_id <= 0:
+            entity_ids_array.SetTuple1(cell_index, WALL_ENTITY_ID)
+
+    poly_data.GetCellData().SetScalars(entity_ids_array)
+    poly_data.Modified()
+
+
+def extract_cells_by_entity_id(poly_data, array_name, entity_id):
+
+    threshold = vtk.vtkThreshold()
+    threshold.SetInputData(poly_data)
+    threshold.SetInputArrayToProcess(
+        0,
+        0,
+        0,
+        vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS,
+        array_name
+    )
+    threshold.SetLowerThreshold(entity_id - 0.5)
+    threshold.SetUpperThreshold(entity_id + 0.5)
+    threshold.Update()
+
+    geometry = vtk.vtkGeometryFilter()
+    geometry.SetInputConnection(threshold.GetOutputPort())
+    geometry.Update()
+
+    return deep_copy_polydata(geometry.GetOutput())
+
+
+def write_boundary_mapping(boundary_info):
+
+    boundary_mapping = {
+        "wall": {
+            "patch_name": "wall",
+            "entity_id": WALL_ENTITY_ID,
+        },
+        "caps": {
+            info["patch_name"]: {
+                "label": info["label"],
+                "entity_id": info["entity_id"],
+                "barycenter_ras": info["barycenter_ras"],
+            }
+            for info in boundary_info
+        }
+    }
+
+    with open(BOUNDARY_IDS_PATH, "w") as boundary_file:
+        json.dump(boundary_mapping, boundary_file, indent=4)
+
+    return boundary_mapping
+
+
+# ============================================================
+# LOAD REQUIRED INPUTS
+# ============================================================
+
+print("")
+print("======================================")
+print("Preparing airway clipping inputs")
+print("======================================")
+
+centerline_endpoints_node = ensure_endpoints_node()
+endpoint_positions = get_endpoint_positions(centerline_endpoints_node)
+
+if len(endpoint_positions) < 2:
+    raise RuntimeError(
+        "At least two centerline endpoints are required for airway clipping."
+    )
+
+network_model_node = slicer.util.getNode("AirwayNetworkModel")
+network_poly_data = network_model_node.GetPolyData()
+
+if network_poly_data is None or network_poly_data.GetNumberOfPoints() == 0:
+    raise RuntimeError(
+        "AirwayNetworkModel is missing or empty. Run calculate_centerline.py first."
+    )
+
+segmentation_node, airways_segment_id, airway_surface_poly_data = (
+    get_airway_surface_polydata()
+)
+
+airway_surface_poly_data = clean_polydata(airway_surface_poly_data)
+
+print("Endpoints:", len(endpoint_positions))
+print("Network points:", network_poly_data.GetNumberOfPoints())
+print("Airway surface points:", airway_surface_poly_data.GetNumberOfPoints())
+
+
+# ============================================================
+# CLIP AIRWAY SURFACE AT ENDPOINTS
+# ============================================================
+
+print("")
+print("======================================")
+print("Clipping airway surface at endpoints")
+print("======================================")
+
+clipped_open_surface_poly_data = deep_copy_polydata(airway_surface_poly_data)
+
+for point_index, endpoint_position in enumerate(endpoint_positions):
+    anchor_point, inward_tangent = estimate_inward_tangent(
+        network_poly_data,
+        endpoint_position
+    )
+
+    print("")
+    print(f"Endpoint {point_index + 1}")
+    print("  Requested point RAS:", endpoint_position)
+    print("  Network anchor RAS:", anchor_point)
+    print("  Inward tangent:", inward_tangent)
+
+    clipped_open_surface_poly_data = clip_surface_with_plane_keep_larger_piece(
+        clipped_open_surface_poly_data,
+        anchor_point,
+        inward_tangent
+    )
+
+clipped_open_surface_poly_data = largest_region(
+    clean_polydata(clipped_open_surface_poly_data)
+)
+
+clipped_open_surface_model_node = add_model_node(
+    "AirwayClippedSurfaceOpen",
+    clipped_open_surface_poly_data,
+    color=(1.0, 0.65, 0.0),
+    opacity=0.6
+)
+
+print(
+    "Clipped open surface points:",
+    clipped_open_surface_poly_data.GetNumberOfPoints()
+)
+
+
+# ============================================================
+# ADD FLOW EXTENSIONS
+# ============================================================
+
+print("")
+print("======================================")
+print("Adding flow extensions")
+print("======================================")
+
+flow_extensions_filter = new_vmtk_instance(
+    "vtkvmtkPolyDataFlowExtensionsFilter"
+)
+flow_extensions_filter.SetInputData(clipped_open_surface_poly_data)
+flow_extensions_filter.SetCenterlines(network_poly_data)
+flow_extensions_filter.SetSigma(SIGMA)
+flow_extensions_filter.SetAdaptiveExtensionLength(0)
+flow_extensions_filter.SetAdaptiveExtensionRadius(1)
+flow_extensions_filter.SetAdaptiveNumberOfBoundaryPoints(0)
+flow_extensions_filter.SetExtensionLength(EXTENSION_LENGTH)
+flow_extensions_filter.SetExtensionRatio(EXTENSION_RATIO)
+flow_extensions_filter.SetExtensionRadius(1.0)
+flow_extensions_filter.SetTransitionRatio(TRANSITION_RATIO)
+flow_extensions_filter.SetCenterlineNormalEstimationDistanceRatio(
+    CENTERLINE_NORMAL_ESTIMATION_DISTANCE_RATIO
+)
+flow_extensions_filter.SetNumberOfBoundaryPoints(
+    TARGET_NUMBER_OF_BOUNDARY_POINTS
+)
+
+# Use the centerline/endpoints to define the cut locations, but generate
+# the CFD flow extensions from the cut boundary normals. This produces
+# straighter inlet/outlet tubes than following the network geometry,
+# which can curve near bifurcations and create crooked extensions.
+flow_extensions_filter.SetExtensionModeToUseNormalToBoundary()
+flow_extensions_filter.SetInterpolationModeToLinear()
+flow_extensions_filter.Update()
+
+extended_open_surface_poly_data = deep_copy_polydata(
+    flow_extensions_filter.GetOutput()
+)
+extended_open_surface_poly_data = largest_region(
+    clean_polydata(extended_open_surface_poly_data)
+)
+
+extended_open_surface_model_node = add_model_node(
+    "AirwayExtendedSurfaceOpen",
+    extended_open_surface_poly_data,
+    color=(0.0, 0.6, 1.0),
+    opacity=0.5
+)
+
+print(
+    "Extended open surface points:",
+    extended_open_surface_poly_data.GetNumberOfPoints()
+)
+
+
+# ============================================================
+# IDENTIFY OPEN BOUNDARIES FOR NAMED CAPS
+# ============================================================
+
+print("")
+print("======================================")
+print("Identifying airway boundary openings")
+print("======================================")
+
+extended_boundaries_poly_data = extract_boundaries(
+    extended_open_surface_poly_data
+)
+
+boundary_info = assign_boundary_names(
+    extended_boundaries_poly_data,
+    centerline_endpoints_node
+)
+
+for info in boundary_info:
+    print(
+        f"Boundary {info['boundary_id']}: {info['label']} -> "
+        f"patch '{info['patch_name']}' (entity id {info['entity_id']})"
+    )
+
+
+# ============================================================
+# CAP EXTENDED SURFACE
+# ============================================================
+
+print("")
+print("======================================")
+print("Capping extended surface")
+print("======================================")
+
+capper = new_vmtk_instance("vtkvmtkSmoothCapPolyData")
+capper.SetInputData(extended_open_surface_poly_data)
+capper.SetCellEntityIdsArrayName("CellEntityIds")
+capper.SetCellEntityIdOffset(WALL_ENTITY_ID + 1)
+capper.SetConstraintFactor(1.0)
+capper.SetNumberOfRings(8)
+capper.Update()
+
+capped_surface_poly_data = deep_copy_polydata(capper.GetOutput())
+set_wall_and_cap_entity_ids(capped_surface_poly_data, "CellEntityIds")
+capped_surface_poly_data = clean_polydata(capped_surface_poly_data)
+
+capped_surface_model_node = add_model_node(
+    "AirwayExtendedSurfaceCapped",
+    capped_surface_poly_data,
+    color=(0.0, 1.0, 0.0),
+    opacity=0.4
+)
+
+capped_surface_model_node.SetAttribute("BoundaryPatch.wall", str(WALL_ENTITY_ID))
+
+for info in boundary_info:
+    capped_surface_model_node.SetAttribute(
+        f"BoundaryPatch.{info['patch_name']}",
+        str(info['entity_id'])
+    )
+
+wall_poly_data = extract_cells_by_entity_id(
+    capped_surface_poly_data,
+    "CellEntityIds",
+    WALL_ENTITY_ID
+)
+wall_model_node = add_model_node(
+    "wall",
+    wall_poly_data,
+    color=(0.8, 0.8, 0.8),
+    opacity=0.2
+)
+wall_model_node.SetDisplayVisibility(False)
+
+cap_model_nodes = []
+
+for info in boundary_info:
+    cap_poly_data = extract_cells_by_entity_id(
+        capped_surface_poly_data,
+        "CellEntityIds",
+        info["entity_id"]
+    )
+
+    cap_model_node = add_model_node(
+        info["patch_name"],
+        cap_poly_data,
+        color=(1.0, 0.0, 1.0),
+        opacity=1.0
+    )
+    cap_model_node.SetAttribute("BoundaryLabel", info["label"])
+    cap_model_node.SetAttribute("BoundaryPatchName", info["patch_name"])
+    cap_model_node.SetAttribute("CellEntityId", str(info["entity_id"]))
+    cap_model_nodes.append(cap_model_node)
+
+boundary_mapping = write_boundary_mapping(boundary_info)
+
+print(
+    "Capped extended surface points:",
+    capped_surface_poly_data.GetNumberOfPoints()
+)
+print("Boundary mapping written to:", BOUNDARY_IDS_PATH)
+
+
+# ============================================================
+# DISPLAY
+# ============================================================
+
+segmentation_display_node = segmentation_node.GetDisplayNode()
+if segmentation_display_node is not None:
+    segmentation_display_node.SetOpacity3D(0.15)
+
+centerline_endpoints_node.SetDisplayVisibility(True)
+network_model_node.SetDisplayVisibility(True)
+clipped_open_surface_model_node.SetDisplayVisibility(False)
+extended_open_surface_model_node.SetDisplayVisibility(False)
+capped_surface_model_node.SetDisplayVisibility(True)
+
+
+# ============================================================
+# FINAL REPORT
+# ============================================================
+
+print("")
+print("======================================")
+print("AIRWAY CFD SURFACE PREPARATION COMPLETE")
+print("======================================")
+print("")
+print("Airways segment ID:", airways_segment_id)
+print("Endpoints node:", centerline_endpoints_node.GetName())
+print("Network model:", network_model_node.GetName())
+print("Clipped surface model:", clipped_open_surface_model_node.GetName())
+print("Extended surface model:", extended_open_surface_model_node.GetName())
+print("Capped CFD surface model:", capped_surface_model_node.GetName())
+print("")
+print("Visible result:", capped_surface_model_node.GetName())
+print("")
+print("Boundary patches:")
+print(f"  wall -> entity id {WALL_ENTITY_ID}")
+for info in boundary_info:
+    print(
+        f"  {info['patch_name']} -> entity id {info['entity_id']} "
+        f"(from {info['label']})"
+    )
+print("")
+print("Boundary mapping file:", BOUNDARY_IDS_PATH)
+print("")
+print("======================================")

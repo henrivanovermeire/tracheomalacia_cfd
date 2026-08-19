@@ -1,0 +1,35 @@
+{
+    "wall": {
+        "patch_name": "wall",
+        "entity_id": 1
+    },
+    "caps": {
+        "centerlineendpoints_4": {
+            "label": "CenterlineEndpoints-4",
+            "entity_id": 2,
+            "barycenter_ras": [
+                -7.751806526184082,
+                97.98430480957032,
+                1311.6018237304688
+            ]
+        },
+        "centerlineendpoints_2": {
+            "label": "CenterlineEndpoints-2",
+            "entity_id": 3,
+            "barycenter_ras": [
+                13.743589324951172,
+                104.85836334228516,
+                1320.0145141601563
+            ]
+        },
+        "centerlineendpoints_1": {
+            "label": "CenterlineEndpoints-1",
+            "entity_id": 4,
+            "barycenter_ras": [
+                1.3354082483053207,
+                127.04947021484375,
+                1363.5191186523436
+            ]
+        }
+    }
+}
