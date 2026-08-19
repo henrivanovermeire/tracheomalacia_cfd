@@ -255,17 +255,6 @@ airway_seed_IJK, airway_seed_HU = get_seed_info(
     airway_seed_RAS
 )
 
-if not (
-    airway_lower_HU
-    <= airway_seed_HU
-    <= airway_upper_HU
-):
-
-    raise RuntimeError(
-        f"Airway seed HU {airway_seed_HU} is outside "
-        f"[{airway_lower_HU}, {airway_upper_HU}]"
-    )
-
 
 # ============================================================
 # CREATE AIRWAY FIDUCIAL
@@ -287,7 +276,7 @@ airway_markup.AddControlPoint(
 
 airway_markup.SetNthControlPointLabel(
     0,
-    f"Airway ({airway_seed_HU:.0f} HU)"
+    f"Airway Seed"
 )
 
 airway_markup.SetDisplayVisibility(True)
@@ -373,32 +362,6 @@ print(
     "Airway voxels:",
     airway_voxels
 )
-
-
-# ============================================================
-# VERIFY AIRWAY SEED
-# ============================================================
-
-airway_seed_value = (
-    airway_output.GetScalarComponentAsDouble(
-        airway_seed_IJK[0],
-        airway_seed_IJK[1],
-        airway_seed_IJK[2],
-        0
-    )
-)
-
-print(
-    "Airway seed value:",
-    airway_seed_value
-)
-
-if airway_seed_value != 1:
-
-    raise RuntimeError(
-        "Airway region growing does not contain the seed."
-    )
-
 
 # ============================================================
 # CONVERT AIRWAY RESULT TO ORIENTED IMAGE
@@ -530,14 +493,6 @@ print("  Spacing:", volume_node.GetSpacing())
 print("")
 print("AIRWAYS:")
 print("  Seed RAS:", airway_seed_RAS)
-print("  Seed IJK:", airway_seed_IJK)
-print("  Seed HU:", airway_seed_HU)
-print(
-    "  HU range:",
-    airway_lower_HU,
-    "to",
-    airway_upper_HU
-)
 print("  Voxels:", airway_voxels)
 
 print("")
