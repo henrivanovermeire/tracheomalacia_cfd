@@ -7,15 +7,15 @@
             "coordinateUnits": "mm",
             "locked": false,
             "fixedNumberOfControlPoints": false,
-            "labelFormat": "%N-%d",
-            "lastUsedControlPointNumber": 2,
+            "labelFormat": "AirwayCutEndpoint-%d",
+            "lastUsedControlPointNumber": 4,
             "controlPoints": [
                 {
-                    "id": "1",
-                    "label": "Airway (-979 HU)",
+                    "id": "cut-1",
+                    "label": "AirwayCutEndpoint-1",
                     "description": "",
                     "associatedNodeID": "",
-                    "position": [-5.870349611295694, -108.31885395681064, 1327.7000000000019],
+                    "position": [-1.2140883207321167, -126.11078643798828, 1359.8997802734375],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,
                     "locked": false,
@@ -23,11 +23,35 @@
                     "positionStatus": "defined"
                 },
                 {
-                    "id": "2",
-                    "label": "AirwaySeed-2",
+                    "id": "cut-2",
+                    "label": "AirwayCutEndpoint-2",
                     "description": "",
                     "associatedNodeID": "",
-                    "position": [-1.2358047076411935, -121.77398432225914, 1350.8000000000034],
+                    "position": [-15.152862548828125, -102.91341400146484, 1314.80126953125],
+                    "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
+                    "selected": true,
+                    "locked": false,
+                    "visibility": true,
+                    "positionStatus": "defined"
+                },
+                {
+                    "id": "cut-3",
+                    "label": "AirwayCutEndpoint-3",
+                    "description": "",
+                    "associatedNodeID": "",
+                    "position": [-17.096757888793945, -103.92811584472656, 1322.1065673828125],
+                    "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
+                    "selected": true,
+                    "locked": false,
+                    "visibility": true,
+                    "positionStatus": "defined"
+                },
+                {
+                    "id": "cut-4",
+                    "label": "AirwayCutEndpoint-4",
+                    "description": "",
+                    "associatedNodeID": "",
+                    "position": [3.7406022548675537, -100.33033752441406, 1314.46923828125],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,
                     "locked": false,
@@ -64,7 +88,7 @@
                 "rotationHandleVisibility": true,
                 "scaleHandleVisibility": false,
                 "interactionHandleScale": 3.0,
-                "snapMode": "toVisibleSurface"
+                "snapMode": "unconstrained"
             }
         }
     ]

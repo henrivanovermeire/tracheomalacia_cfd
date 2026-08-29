@@ -35,8 +35,10 @@ except ImportError:
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-endpoints_path = (
-    project_path / "segmentation" / "assets" / "postop" / "CenterlineEndpoints.json"
+CUT_ENDPOINTS_NODE_NAME = "AirwayCutEndpoints"
+
+cut_endpoints_path = (
+    project_path / "segmentation" / "assets" / "postop" / "refined_endpoints.json"
 )
 
 EXTENSION_RATIO = 10.0
@@ -158,18 +160,22 @@ def control_point_to_ras(control_point, coordinate_system):
 
     raise ValueError(
         f"Unsupported coordinate system '{coordinate_system}' "
-        f"in markups file: {endpoints_path}"
+        f"in markups file: {cut_endpoints_path}"
     )
 
 
-def ensure_endpoints_node():
+def ensure_cut_endpoints_node():
 
+    # These are the manually-refined cut locations (moved de visu for a
+    # better cut), kept as a separate node/label namespace from the
+    # "CenterlineEndpoints" node used earlier by calculate_centerline.py so
+    # the two point sets never get confused with one another.
     try:
-        return slicer.util.getNode("CenterlineEndpoints")
+        return slicer.util.getNode(CUT_ENDPOINTS_NODE_NAME)
     except Exception:
         pass
 
-    with open(endpoints_path, "r") as endpoints_file:
+    with open(cut_endpoints_path, "r") as endpoints_file:
         endpoints_data = json.load(endpoints_file)
 
     endpoints_markup_data = endpoints_data["markups"][0]
@@ -178,31 +184,31 @@ def ensure_endpoints_node():
 
     if not control_points:
         raise RuntimeError(
-            f"No control points found in {endpoints_path}."
+            f"No control points found in {cut_endpoints_path}."
         )
 
-    endpoints_node = slicer.mrmlScene.AddNewNodeByClass(
+    cut_endpoints_node = slicer.mrmlScene.AddNewNodeByClass(
         "vtkMRMLMarkupsFiducialNode",
-        "CenterlineEndpoints"
+        CUT_ENDPOINTS_NODE_NAME
     )
 
     for control_point in control_points:
         point_ras = control_point_to_ras(control_point, coordinate_system)
-        point_label = control_point.get("label", "CenterlineEndpoint")
+        point_label = control_point.get("label", "AirwayCutEndpoint")
         point_selected = control_point.get("selected", True)
 
-        point_index = endpoints_node.AddControlPoint(
+        point_index = cut_endpoints_node.AddControlPoint(
             point_ras[0],
             point_ras[1],
             point_ras[2]
         )
 
-        endpoints_node.SetNthControlPointLabel(point_index, point_label)
-        endpoints_node.SetNthControlPointSelected(point_index, point_selected)
+        cut_endpoints_node.SetNthControlPointLabel(point_index, point_label)
+        cut_endpoints_node.SetNthControlPointSelected(point_index, point_selected)
 
-    endpoints_node.SetDisplayVisibility(True)
+    cut_endpoints_node.SetDisplayVisibility(True)
 
-    return endpoints_node
+    return cut_endpoints_node
 
 
 def get_airway_surface_polydata():
@@ -506,12 +512,12 @@ print("======================================")
 print("Preparing airway clipping inputs")
 print("======================================")
 
-centerline_endpoints_node = ensure_endpoints_node()
-endpoint_positions = get_endpoint_positions(centerline_endpoints_node)
+cut_endpoints_node = ensure_cut_endpoints_node()
+endpoint_positions = get_endpoint_positions(cut_endpoints_node)
 
 if len(endpoint_positions) < 2:
     raise RuntimeError(
-        "At least two centerline endpoints are required for airway clipping."
+        "At least two airway cut endpoints are required for airway clipping."
     )
 
 network_model_node = slicer.util.getNode("AirwayNetworkModel")
@@ -528,7 +534,7 @@ segmentation_node, airways_segment_id, airway_surface_poly_data = (
 
 airway_surface_poly_data = clean_polydata(airway_surface_poly_data)
 
-print("Endpoints:", len(endpoint_positions))
+print("Cut endpoints:", len(endpoint_positions))
 print("Network points:", network_poly_data.GetNumberOfPoints())
 print("Airway surface points:", airway_surface_poly_data.GetNumberOfPoints())
 
@@ -558,7 +564,7 @@ for point_index, endpoint_position in enumerate(endpoint_positions):
 
     clipped_open_surface_poly_data = clip_surface_with_plane_keep_larger_piece(
         clipped_open_surface_poly_data,
-        anchor_point,
+        endpoint_position,
         inward_tangent
     )
 
@@ -651,7 +657,7 @@ extended_boundaries_poly_data = extract_boundaries(
 
 boundary_info = assign_boundary_names(
     extended_boundaries_poly_data,
-    centerline_endpoints_node
+    cut_endpoints_node
 )
 
 for info in boundary_info:
@@ -747,7 +753,7 @@ segmentation_display_node = segmentation_node.GetDisplayNode()
 if segmentation_display_node is not None:
     segmentation_display_node.SetOpacity3D(0.15)
 
-centerline_endpoints_node.SetDisplayVisibility(True)
+cut_endpoints_node.SetDisplayVisibility(True)
 network_model_node.SetDisplayVisibility(True)
 clipped_open_surface_model_node.SetDisplayVisibility(False)
 extended_open_surface_model_node.SetDisplayVisibility(False)
@@ -764,7 +770,7 @@ print("AIRWAY CFD SURFACE PREPARATION COMPLETE")
 print("======================================")
 print("")
 print("Airways segment ID:", airways_segment_id)
-print("Endpoints node:", centerline_endpoints_node.GetName())
+print("Cut endpoints node:", cut_endpoints_node.GetName())
 print("Network model:", network_model_node.GetName())
 print("Clipped surface model:", clipped_open_surface_model_node.GetName())
 print("Extended surface model:", extended_open_surface_model_node.GetName())
