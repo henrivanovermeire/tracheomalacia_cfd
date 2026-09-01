@@ -30,9 +30,30 @@ During the segmentation process, the caps of the airways were defined as physica
 
 ### Running the segmentation scripts
 
-in the Slicer Python console, run the following command:
+Two patient cases are analysed with the exact same flow: `postop` and
+`preop`. Each script has a `CASE` variable near the top (defaulting to
+`"postop"`) that selects which DICOM series and which case-specific asset
+files (seeds, endpoints, boundary ids, ...) under `segmentation/assets/`
+are used. Set `CASE = "preop"` in every script below before switching to
+the other case, and start from a fresh Slicer scene when doing so.
+
+Note that case-specific markup files (`AirwaySeed.json`,
+`CenterlineEndpoints.json`, `refined_endpoints.json`) must exist under
+`segmentation/assets/<case>/` before running that case; they are created
+by placing/adjusting points visually in Slicer and exporting them from
+the Markups module, since seed/endpoint locations are specific to each
+patient's anatomy.
+
+In the Slicer Python console, run the following commands in order:
 ```
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
 
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
+
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
+```
+At this point, review/adjust the loaded `AirwayCutEndpoints` points in the
+Markups module, then run:
+```
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/cut_airways_centerline.py").read())
 ```

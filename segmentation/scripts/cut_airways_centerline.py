@@ -5,6 +5,8 @@ import re
 import slicer
 import vtk
 
+import ClipVessel
+
 # ============================================================
 # OPTIONAL VMTK IMPORTS
 # ============================================================
@@ -35,10 +37,13 @@ except ImportError:
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
+# Which patient case to process. Keep this in sync with segment_airway.py.
+CASE = "postop"
+
 CUT_ENDPOINTS_NODE_NAME = "AirwayCutEndpoints"
 
 cut_endpoints_path = (
-    project_path / "segmentation" / "assets" / "postop" / "refined_endpoints.json"
+    project_path / "segmentation" / "assets" / CASE / "refined_endpoints.json"
 )
 
 EXTENSION_RATIO = 10.0
@@ -49,7 +54,7 @@ TARGET_NUMBER_OF_BOUNDARY_POINTS = 50
 CENTERLINE_NORMAL_ESTIMATION_DISTANCE_RATIO = 1.0
 WALL_ENTITY_ID = 1
 BOUNDARY_IDS_PATH = (
-    project_path / "segmentation" / "assets" / "postop" / "AirwayCFDBoundaries.json"
+    project_path / "segmentation" / "assets" / CASE / "AirwayCFDBoundaries.json"
 )
 
 
@@ -84,20 +89,6 @@ def remove_node_if_present(node_name):
 
     if existing_node is not None:
         slicer.mrmlScene.RemoveNode(existing_node)
-
-
-def normalize(vector):
-
-    norm = vtk.vtkMath.Norm(vector)
-
-    if norm < 1e-12:
-        raise ValueError("Cannot normalize zero-length vector.")
-
-    return [vector[0] / norm, vector[1] / norm, vector[2] / norm]
-
-
-def subtract(a, b):
-    return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
 
 
 def distance2(a, b):
@@ -247,75 +238,6 @@ def get_endpoint_positions(markups_node):
 
     return positions
 
-
-def estimate_inward_tangent(network_poly_data, endpoint_position):
-
-    best_distance2 = float("inf")
-    best_tangent = None
-    best_anchor = None
-
-    for cell_index in range(network_poly_data.GetNumberOfCells()):
-        cell = network_poly_data.GetCell(cell_index)
-        point_ids = cell.GetPointIds()
-        number_of_ids = point_ids.GetNumberOfIds()
-
-        if number_of_ids < 2:
-            continue
-
-        start_point = network_poly_data.GetPoint(point_ids.GetId(0))
-        next_point = network_poly_data.GetPoint(point_ids.GetId(1))
-        end_point = network_poly_data.GetPoint(point_ids.GetId(number_of_ids - 1))
-        prev_point = network_poly_data.GetPoint(point_ids.GetId(number_of_ids - 2))
-
-        start_distance2 = distance2(endpoint_position, start_point)
-        if start_distance2 < best_distance2:
-            best_distance2 = start_distance2
-            best_anchor = list(start_point)
-            best_tangent = normalize(subtract(next_point, start_point))
-
-        end_distance2 = distance2(endpoint_position, end_point)
-        if end_distance2 < best_distance2:
-            best_distance2 = end_distance2
-            best_anchor = list(end_point)
-            best_tangent = normalize(subtract(prev_point, end_point))
-
-    if best_tangent is None:
-        raise RuntimeError(
-            "Failed to estimate an inward tangent from the network model."
-        )
-
-    return best_anchor, best_tangent
-
-
-def clip_surface_with_plane_keep_larger_piece(surface_poly_data, origin, normal):
-
-    plane = vtk.vtkPlane()
-    plane.SetOrigin(origin)
-    plane.SetNormal(normal)
-
-    outputs = []
-
-    for inside_out in [False, True]:
-        clipper = vtk.vtkClipPolyData()
-        clipper.SetInputData(surface_poly_data)
-        clipper.SetClipFunction(plane)
-        if inside_out:
-            clipper.InsideOutOn()
-        else:
-            clipper.InsideOutOff()
-        clipper.GenerateClippedOutputOff()
-        clipper.Update()
-
-        clipped = largest_region(clean_polydata(clipper.GetOutput()))
-        outputs.append(clipped)
-
-    outputs = [poly for poly in outputs if poly.GetNumberOfPoints() > 0]
-
-    if not outputs:
-        raise RuntimeError("Plane clipping removed the entire airway surface.")
-
-    outputs.sort(key=lambda poly: poly.GetNumberOfPoints(), reverse=True)
-    return outputs[0]
 
 
 def add_model_node(name, poly_data, color, opacity=1.0, line_width=None):
@@ -541,6 +463,19 @@ print("Airway surface points:", airway_surface_poly_data.GetNumberOfPoints())
 
 # ============================================================
 # CLIP AIRWAY SURFACE AT ENDPOINTS
+#
+# Delegates to ClipVesselLogic, the same logic used by the interactive
+# "Clip Vessel" module (SlicerVMTK), so this matches running that
+# module manually with AirwayNetworkModel as centerlines and
+# AirwayCutEndpoints as clip points. An earlier, hand-rolled
+# implementation here estimated each cut's normal using only the
+# network's topological termini/bifurcations (cell start/end points):
+# for a clip point moved away from a terminus (e.g. down the trachea,
+# past a stenosis), that could only ever find the terminus itself as
+# the nearest candidate, so the cut kept the right *position* but used
+# the wrong, terminus-based *orientation*. ClipVesselLogic instead
+# resamples the centerline finely and uses the local Frenet tangent
+# closest to each clip point.
 # ============================================================
 
 print("")
@@ -548,29 +483,27 @@ print("======================================")
 print("Clipping airway surface at endpoints")
 print("======================================")
 
-clipped_open_surface_poly_data = deep_copy_polydata(airway_surface_poly_data)
+clip_vessel_logic = ClipVessel.ClipVesselLogic()
 
-for point_index, endpoint_position in enumerate(endpoint_positions):
-    anchor_point, inward_tangent = estimate_inward_tangent(
-        network_poly_data,
-        endpoint_position
-    )
-
-    print("")
-    print(f"Endpoint {point_index + 1}")
-    print("  Requested point RAS:", endpoint_position)
-    print("  Network anchor RAS:", anchor_point)
-    print("  Inward tangent:", inward_tangent)
-
-    clipped_open_surface_poly_data = clip_surface_with_plane_keep_larger_piece(
-        clipped_open_surface_poly_data,
-        endpoint_position,
-        inward_tangent
-    )
-
-clipped_open_surface_poly_data = largest_region(
-    clean_polydata(clipped_open_surface_poly_data)
+clipped_open_surface_poly_data = clip_vessel_logic.clipVessel(
+    airway_surface_poly_data,
+    network_model_node,
+    cut_endpoints_node,
+    False,
+    False,
+    EXTENSION_RATIO,
+    "BOUNDARY_NORMAL"
 )
+
+if clip_vessel_logic.lastUnclippedPoints:
+    print(
+        "WARNING: no cut was made at:",
+        ", ".join(clip_vessel_logic.lastUnclippedPoints)
+    )
+    print(
+        "These points are positioned exactly at, or beyond, the "
+        "airway surface -- move them slightly inward."
+    )
 
 clipped_open_surface_model_node = add_model_node(
     "AirwayClippedSurfaceOpen",
@@ -676,12 +609,18 @@ print("======================================")
 print("Capping extended surface")
 print("======================================")
 
-capper = new_vmtk_instance("vtkvmtkSmoothCapPolyData")
+# Flat caps rather than a smoothed/domed cap: cleaner, planar inlet/
+# outlet patches are what a CFD boundary condition actually wants, and
+# the flow extensions already added above provide the flow-development
+# length, so there's no need for the cap itself to blend into the wall
+# shape. This is the same filter (with zero displacement) that
+# ClipVesselLogic uses for its own "Cap output surface" option.
+capper = new_vmtk_instance("vtkvmtkCapPolyData")
 capper.SetInputData(extended_open_surface_poly_data)
 capper.SetCellEntityIdsArrayName("CellEntityIds")
 capper.SetCellEntityIdOffset(WALL_ENTITY_ID + 1)
-capper.SetConstraintFactor(1.0)
-capper.SetNumberOfRings(8)
+capper.SetDisplacement(0.0)
+capper.SetInPlaneDisplacement(0.0)
 capper.Update()
 
 capped_surface_poly_data = deep_copy_polydata(capper.GetOutput())

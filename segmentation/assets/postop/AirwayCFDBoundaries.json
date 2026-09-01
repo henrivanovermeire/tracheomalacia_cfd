@@ -8,36 +8,36 @@
             "label": "AirwayCutEndpoint-4",
             "entity_id": 2,
             "barycenter_ras": [
-                -4.441160063743592,
-                99.91332916259766,
-                1313.9673413085939
-            ]
-        },
-        "airwaycutendpoint_2": {
-            "label": "AirwayCutEndpoint-2",
-            "entity_id": 3,
-            "barycenter_ras": [
-                15.77991886138916,
-                102.69278015136719,
-                1314.2156787109375
+                -4.442404389381409,
+                99.85968811035156,
+                1314.0193408203124
             ]
         },
         "airwaycutendpoint_3": {
             "label": "AirwayCutEndpoint-3",
+            "entity_id": 3,
+            "barycenter_ras": [
+                18.00822006225586,
+                103.63628967285156,
+                1322.121611328125
+            ]
+        },
+        "airwaycutendpoint_2": {
+            "label": "AirwayCutEndpoint-2",
             "entity_id": 4,
             "barycenter_ras": [
-                18.006095504760744,
-                103.77002456665039,
-                1322.4241625976563
+                15.6291778755188,
+                102.63017196655274,
+                1314.1279516601562
             ]
         },
         "airwaycutendpoint_1": {
             "label": "AirwayCutEndpoint-1",
             "entity_id": 5,
             "barycenter_ras": [
-                0.9541329732537269,
-                127.32799224853515,
-                1361.801806640625
+                1.1799172716960311,
+                126.43007232666015,
+                1360.6143432617187
             ]
         }
     }

@@ -2,11 +2,11 @@
   {
     "name": "airway",
     "min": -1500,
-    "max": -650
+    "max": -300
   },
   {
     "name": "lung",
     "min": -900,
-    "max": -650
+    "max": -500
   }
 ]}

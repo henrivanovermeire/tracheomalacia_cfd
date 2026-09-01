@@ -9,10 +9,13 @@ import slicer
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
+# Which patient case to process. Keep this in sync with segment_airway.py.
+CASE = "postop"
+
 CUT_ENDPOINTS_NODE_NAME = "AirwayCutEndpoints"
 
 cut_endpoints_path = (
-    project_path / "segmentation" / "assets" / "postop" / "refined_endpoints.json"
+    project_path / "segmentation" / "assets" / CASE / "refined_endpoints.json"
 )
 
 

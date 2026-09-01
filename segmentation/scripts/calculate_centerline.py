@@ -9,8 +9,11 @@ import ExtractCenterline
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
+# Which patient case to process. Keep this in sync with segment_airway.py.
+CASE = "postop"
+
 endpoints_path = (
-    project_path / "segmentation" / "assets" / "postop" / "CenterlineEndpoints.json"
+    project_path / "segmentation" / "assets" / CASE / "CenterlineEndpoints.json"
 )
 
 with open(endpoints_path, "r") as endpoints_file:

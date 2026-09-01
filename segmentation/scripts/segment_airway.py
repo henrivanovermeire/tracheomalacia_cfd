@@ -9,9 +9,16 @@ import pathlib
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-source_folder = project_path / "segmentation" / "source" / "DICOM_postop"
+# Which patient case to process. Switch this to "preop" to run the exact
+# same flow on the pre-operative DICOM data instead. Every other
+# case-specific script (calculate_centerline.py, load_cutting_points.py,
+# cut_airways_centerline.py) exposes the same CASE variable and should be
+# kept in sync with this one.
+CASE = "postop"
 
-setting_path = project_path / "segmentation" / "assets" / "preop" / "segmentation_settings.json"
+source_folder = project_path / "segmentation" / "source" / f"DICOM_{CASE}"
+
+setting_path = project_path / "segmentation" / "assets" / CASE / "segmentation_settings.json"
 with open(setting_path , "r") as seg_setting_file:
     seg_setting = json.load(seg_setting_file)
 
@@ -19,7 +26,7 @@ with open(setting_path , "r") as seg_setting_file:
 # SEEDS
 # ============================================================
 
-seed_path = project_path / "segmentation" / "assets" / "postop" / "AirwaySeed.json"
+seed_path = project_path / "segmentation" / "assets" / CASE / "AirwaySeed.json"
 
 
 def load_seed_ras_from_markups(json_path, point_index=0):
