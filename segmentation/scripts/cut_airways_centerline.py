@@ -46,12 +46,10 @@ cut_endpoints_path = (
     project_path / "segmentation" / "assets" / CASE / "refined_endpoints.json"
 )
 
-EXTENSION_RATIO = 10.0
-EXTENSION_LENGTH = 1.0
-TRANSITION_RATIO = 0.25
-SIGMA = 1.0
-TARGET_NUMBER_OF_BOUNDARY_POINTS = 50
-CENTERLINE_NORMAL_ESTIMATION_DISTANCE_RATIO = 1.0
+# Flow extension length, as a multiple of the local vessel/airway
+# radius at each cut (matches ClipVesselLogic's own default so the
+# scripted result matches the manual "Clip Vessel" module).
+EXTENSION_RATIO = 5.0
 WALL_ENTITY_ID = 1
 BOUNDARY_IDS_PATH = (
     project_path / "segmentation" / "assets" / CASE / "AirwayCFDBoundaries.json"
@@ -462,37 +460,41 @@ print("Airway surface points:", airway_surface_poly_data.GetNumberOfPoints())
 
 
 # ============================================================
-# CLIP AIRWAY SURFACE AT ENDPOINTS
+# CLIP AIRWAY SURFACE AT ENDPOINTS AND ADD FLOW EXTENSIONS
 #
 # Delegates to ClipVesselLogic, the same logic used by the interactive
 # "Clip Vessel" module (SlicerVMTK), so this matches running that
 # module manually with AirwayNetworkModel as centerlines and
-# AirwayCutEndpoints as clip points. An earlier, hand-rolled
-# implementation here estimated each cut's normal using only the
-# network's topological termini/bifurcations (cell start/end points):
-# for a clip point moved away from a terminus (e.g. down the trachea,
-# past a stenosis), that could only ever find the terminus itself as
-# the nearest candidate, so the cut kept the right *position* but used
-# the wrong, terminus-based *orientation*. ClipVesselLogic instead
-# resamples the centerline finely and uses the local Frenet tangent
-# closest to each clip point.
+# AirwayCutEndpoints as clip points.
+#
+# Flow extensions are also generated here, via ClipVesselLogic's own
+# extension step (addFlowExtensions=True) rather than a separately
+# configured vtkvmtkPolyDataFlowExtensionsFilter call: this reuses its
+# adaptive defaults (extension length as a multiple of the local
+# radius, extension radius matching the local radius, centerline
+# -direction orientation) instead of the fixed, non-adaptive values an
+# earlier version of this script used, which produced extensions that
+# didn't scale naturally with the airway's size at each cut.
+# Capping is intentionally left to a later step (cap=False) so the
+# caps can be tagged with per-boundary CellEntityIds for CFD patch
+# naming, which ClipVesselLogic's own capping does not do.
 # ============================================================
 
 print("")
 print("======================================")
-print("Clipping airway surface at endpoints")
+print("Clipping airway surface and adding flow extensions")
 print("======================================")
 
 clip_vessel_logic = ClipVessel.ClipVesselLogic()
 
-clipped_open_surface_poly_data = clip_vessel_logic.clipVessel(
+extended_open_surface_poly_data = clip_vessel_logic.clipVessel(
     airway_surface_poly_data,
     network_model_node,
     cut_endpoints_node,
     False,
-    False,
+    True,
     EXTENSION_RATIO,
-    "BOUNDARY_NORMAL"
+    "CENTERLINE_DIRECTION"
 )
 
 if clip_vessel_logic.lastUnclippedPoints:
@@ -504,63 +506,6 @@ if clip_vessel_logic.lastUnclippedPoints:
         "These points are positioned exactly at, or beyond, the "
         "airway surface -- move them slightly inward."
     )
-
-clipped_open_surface_model_node = add_model_node(
-    "AirwayClippedSurfaceOpen",
-    clipped_open_surface_poly_data,
-    color=(1.0, 0.65, 0.0),
-    opacity=0.6
-)
-
-print(
-    "Clipped open surface points:",
-    clipped_open_surface_poly_data.GetNumberOfPoints()
-)
-
-
-# ============================================================
-# ADD FLOW EXTENSIONS
-# ============================================================
-
-print("")
-print("======================================")
-print("Adding flow extensions")
-print("======================================")
-
-flow_extensions_filter = new_vmtk_instance(
-    "vtkvmtkPolyDataFlowExtensionsFilter"
-)
-flow_extensions_filter.SetInputData(clipped_open_surface_poly_data)
-flow_extensions_filter.SetCenterlines(network_poly_data)
-flow_extensions_filter.SetSigma(SIGMA)
-flow_extensions_filter.SetAdaptiveExtensionLength(0)
-flow_extensions_filter.SetAdaptiveExtensionRadius(1)
-flow_extensions_filter.SetAdaptiveNumberOfBoundaryPoints(0)
-flow_extensions_filter.SetExtensionLength(EXTENSION_LENGTH)
-flow_extensions_filter.SetExtensionRatio(EXTENSION_RATIO)
-flow_extensions_filter.SetExtensionRadius(1.0)
-flow_extensions_filter.SetTransitionRatio(TRANSITION_RATIO)
-flow_extensions_filter.SetCenterlineNormalEstimationDistanceRatio(
-    CENTERLINE_NORMAL_ESTIMATION_DISTANCE_RATIO
-)
-flow_extensions_filter.SetNumberOfBoundaryPoints(
-    TARGET_NUMBER_OF_BOUNDARY_POINTS
-)
-
-# Use the centerline/endpoints to define the cut locations, but generate
-# the CFD flow extensions from the cut boundary normals. This produces
-# straighter inlet/outlet tubes than following the network geometry,
-# which can curve near bifurcations and create crooked extensions.
-flow_extensions_filter.SetExtensionModeToUseNormalToBoundary()
-flow_extensions_filter.SetInterpolationModeToLinear()
-flow_extensions_filter.Update()
-
-extended_open_surface_poly_data = deep_copy_polydata(
-    flow_extensions_filter.GetOutput()
-)
-extended_open_surface_poly_data = largest_region(
-    clean_polydata(extended_open_surface_poly_data)
-)
 
 extended_open_surface_model_node = add_model_node(
     "AirwayExtendedSurfaceOpen",
@@ -694,7 +639,6 @@ if segmentation_display_node is not None:
 
 cut_endpoints_node.SetDisplayVisibility(True)
 network_model_node.SetDisplayVisibility(True)
-clipped_open_surface_model_node.SetDisplayVisibility(False)
 extended_open_surface_model_node.SetDisplayVisibility(False)
 capped_surface_model_node.SetDisplayVisibility(True)
 
@@ -711,7 +655,6 @@ print("")
 print("Airways segment ID:", airways_segment_id)
 print("Cut endpoints node:", cut_endpoints_node.GetName())
 print("Network model:", network_model_node.GetName())
-print("Clipped surface model:", clipped_open_surface_model_node.GetName())
 print("Extended surface model:", extended_open_surface_model_node.GetName())
 print("Capped CFD surface model:", capped_surface_model_node.GetName())
 print("")
