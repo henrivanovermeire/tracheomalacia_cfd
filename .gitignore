@@ -217,8 +217,17 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Downloaded CFD results are local visualization artifacts.
+# LaTeX build intermediates (the generated report PDF is retained).
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.lof
+report/*.lot
+
+# Downloaded CFD results and generated comparison cases are local artifacts.
 results/
+openFOAM/postop_fine/
 
 # Include only run files for openFOAM; exclude solutions.
 # Ignore everything in the OpenFOAM case

@@ -56,4 +56,49 @@ At this point, review/adjust the loaded `AirwayCutEndpoints` points in the
 Markups module, then run:
 ```
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/cut_airways_centerline.py").read())
+
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segmentation.py").read())
 ```
+
+The export script writes the capped and extended CFD surface to
+`meshes/airways.stl`.
+
+## Meshing and CFD
+
+The meshing and solver stages are deliberately separate:
+
+```bash
+# Generate a verified Gmsh volume mesh locally (default: 0.25 mm)
+./create_volume_mesh.sh postop
+
+# Run the existing mesh with OpenFOAM in Docker
+NPROCS=8 ./run_cfd.sh postop
+```
+
+`run_cfd.sh` validates that `inlet`, `outlet_1`, `outlet_2`, `outlet_3`, and
+`wall` exist before starting the solver. The `NPROCS` value must match
+`numberOfSubdomains` in the case's `system/decomposeParDict`.
+
+Fetch reconstructed results from a remote host with:
+
+```bash
+./fetch_cfd_results.sh <DROPLET_IP> postop
+paraview results/postop/postop.foam
+```
+
+Run the complete remote fine-mesh experiment, using defaults of `0.15 mm` and
+60 MPI ranks, with:
+
+```bash
+./run_fine_cfd.sh <DROPLET_IP>
+```
+
+Override those defaults when needed:
+
+```bash
+MESH_SIZE=0.12 NPROCS=60 ./run_fine_cfd.sh <DROPLET_IP> --visualize
+```
+
+See [`WORKFLOW.md`](WORKFLOW.md) for installation instructions, the complete
+Slicer-to-ParaView procedure, physical-boundary verification, remote execution,
+and mesh-independence guidance.

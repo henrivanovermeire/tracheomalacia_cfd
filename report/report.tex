@@ -1,0 +1,853 @@
+\documentclass[11pt,a4paper]{article}
+
+% -----------------------------------------------------------------------------
+% Packages
+% -----------------------------------------------------------------------------
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+% -----------------------------------------------------------------------------
+% Document metadata and formatting
+% -----------------------------------------------------------------------------
+\newcommand{\reporttitle}{Patient-Specific Computational Fluid Dynamics of the Airways}
+\newcommand{\reportsubtitle}{Segmentation, Mesh Generation, and Flow Analysis in Tracheomalacia}
+\newcommand{\reportauthor}{Henri Van Overmeire}
+\newcommand{\reportdate}{\today}
+
+\definecolor{codebackground}{RGB}{245,247,250}
+\definecolor{codekeyword}{RGB}{30,80,150}
+\definecolor{codecomment}{RGB}{65,120,75}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebackground},
+  keywordstyle=\color{codekeyword}\bfseries,
+  commentstyle=\color{codecomment},
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Airway CFD}
+\fancyhead[R]{Henri Van Overmeire}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14pt}
+
+\sisetup{
+  detect-all,
+  per-mode=symbol
+}
+
+\graphicspath{{figures/}}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+
+% -----------------------------------------------------------------------------
+% Title page
+% -----------------------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \vspace*{2.5cm}
+
+  {\Large Computational Biofluid Mechanics\par}
+  \vspace{1.5cm}
+
+  {\Huge\bfseries \reporttitle\par}
+  \vspace{0.6cm}
+  {\Large \reportsubtitle\par}
+
+  \vfill
+
+  \begin{tabular}{rl}
+    \textbf{Author:} & \reportauthor \\
+    \textbf{Date:}   & \reportdate \\
+    \textbf{Repository:} & \texttt{tracheomalacia\_cfd}
+  \end{tabular}
+
+  \vfill
+
+  \textit{Template report---replace bracketed text and placeholder figures with
+  final methods, results, and interpretations.}
+\end{titlepage}
+
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+
+% -----------------------------------------------------------------------------
+% Front matter
+% -----------------------------------------------------------------------------
+\begin{abstract}
+Tracheomalacia is characterised by excessive collapse or narrowing of the
+tracheal lumen and can substantially alter respiratory airflow. This project
+uses patient-specific computed tomography, three-dimensional airway
+segmentation, and computational fluid dynamics (CFD) to compare airflow before
+and after intervention. Airway surfaces are segmented in 3D Slicer, clipped
+along VMTK-derived centerlines, extended in the local centerline direction, and
+closed with planar caps. Tetrahedral volume meshes are generated with Gmsh and
+steady incompressible airflow is solved using OpenFOAM. This report documents
+the reproducible processing pipeline, evaluates mesh quality and mesh
+independence, and compares clinically relevant flow quantities between the
+preoperative and postoperative geometries. [Complete this abstract with the
+principal numerical findings and conclusions.]
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+% -----------------------------------------------------------------------------
+\section{Introduction}
+\label{sec:introduction}
+
+Tracheomalacia involves reduced structural stability of the tracheal wall,
+which may cause dynamic narrowing and increased respiratory resistance. While
+medical imaging describes airway anatomy, CFD can quantify how geometric
+narrowing influences velocity, pressure loss, flow distribution, and local
+shear-related quantities.
+
+The objectives of this project are to:
+
+\begin{enumerate}[label=\arabic*.]
+  \item construct patient-specific preoperative and postoperative airway
+        geometries from computed tomography;
+  \item establish a reproducible segmentation-to-simulation workflow;
+  \item quantify airflow and pressure differences between the two cases; and
+  \item assess whether the numerical conclusions are independent of mesh
+        resolution.
+\end{enumerate}
+
+\subsection{Research questions}
+
+\begin{itemize}
+  \item How does the intervention change the minimum airway cross-section?
+  \item How does the pressure drop across the trachea change?
+  \item Where do peak velocities and recirculation regions occur?
+  \item How is flow divided among the distal outlets?
+  \item Are the reported quantities sufficiently mesh independent?
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+\section{Imaging data and anatomical cases}
+\label{sec:data}
+
+Two computed-tomography datasets are analysed: a preoperative case and a
+postoperative case. Table~\ref{tab:imaging} should be completed from the DICOM
+metadata and segmentation logs.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Imaging and anatomical case information.}
+  \label{tab:imaging}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Case & Voxel dimensions & Voxel spacing (mm) & Clinical state \\
+    \midrule
+    Preoperative  & [insert] & [insert] & Before intervention \\
+    Postoperative & [insert] & [insert] & After intervention \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All patient-derived data must be handled according to the applicable privacy,
+ethics, and data-management requirements. No directly identifying information
+should appear in this report or repository.
+
+% -----------------------------------------------------------------------------
+\section{Airway segmentation and surface preparation}
+\label{sec:segmentation}
+
+\subsection{Segmentation}
+
+The CT series is loaded into 3D Slicer. A case-specific seed is placed in the
+airway lumen, and connected region growth is performed within a selected
+Hounsfield-unit interval. Thresholds and seed coordinates are stored under
+\texttt{segmentation/assets/<case>/}. The result is inspected in axial,
+coronal, sagittal, and three-dimensional views to exclude lung parenchyma and
+external air while retaining the clinically relevant branches.
+
+Record the final settings in Table~\ref{tab:segmentation}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Final segmentation settings.}
+  \label{tab:segmentation}
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    Case & Lower HU & Upper HU & Segmented voxels \\
+    \midrule
+    Preoperative  & [insert] & [insert] & [insert] \\
+    Postoperative & [insert] & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Centerline extraction and clipping}
+
+A centerline network is calculated using VMTK. Visually refined clipping points
+are loaded as the Slicer markup node \texttt{AirwayCutEndpoints}. The airway is
+clipped using the same \textit{Clip Vessel} logic as the SlicerVMTK user
+interface, with \texttt{AirwayNetworkModel} providing the centerline direction.
+
+Flow extensions are aligned with the local centerline and adapt to the airway
+radius at each clipping location. Planar caps close the extensions for CFD. The
+final Slicer model is \texttt{AirwayExtendedSurfaceCapped} and is exported as
+\texttt{meshes/airways.stl}.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: segmentation and final clipped/extended airway surface}}
+  \caption{Airway segmentation and CFD-ready surface. Add representative
+  preoperative and postoperative views with consistent orientation.}
+  \label{fig:segmentation}
+\end{figure}
+
+\subsection{Anatomical measurements and degree of constriction}
+\label{sec:anatomical_measurements}
+
+The preoperative constriction is bounded by proximal and distal landmarks on the
+tracheal centerline. Its length is measured along that centerline. Cross-sections
+normal to the local centerline are sampled through the narrowed region to locate
+the minimum lumen area. Because the lumen need not be circular, an equivalent
+circular diameter is calculated from section area $A$ as
+
+\begin{equation}
+  D_{\mathrm{eq}} = 2\sqrt{\frac{A}{\pi}}.
+\end{equation}
+
+The postoperative area and equivalent diameter are measured at the matching
+anatomical location using the same procedure. The primary area-based degree of
+constriction is
+
+\begin{equation}
+  C_A = \left(1-\frac{A_{\mathrm{pre,min}}}
+  {A_{\mathrm{post,matched}}}\right)\times 100\%.
+  \label{eq:area_constriction}
+\end{equation}
+
+For transparency, the diameter reduction is also reported as
+
+\begin{equation}
+  C_D = \left(1-\frac{D_{\mathrm{pre,min}}}
+  {D_{\mathrm{post,matched}}}\right)\times 100\%.
+\end{equation}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Anatomical measurements used to quantify the preoperative
+  constriction. Replace placeholders with measurements from centerline-normal
+  sections in 3D Slicer.}
+  \label{tab:anatomical_measurements}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Quantity & Symbol & Value \\
+    \midrule
+    Preoperative constriction length & $L_{\mathrm{pre}}$ & [insert] \si{\milli\metre} \\
+    Preoperative minimum area & $A_{\mathrm{pre,min}}$ & [insert] \si{\milli\metre\squared} \\
+    Preoperative equivalent diameter & $D_{\mathrm{pre,min}}$ & [insert] \si{\milli\metre} \\
+    Postoperative matched area & $A_{\mathrm{post,matched}}$ & [insert] \si{\milli\metre\squared} \\
+    Postoperative matched diameter & $D_{\mathrm{post,matched}}$ & [insert] \si{\milli\metre} \\
+    Area constriction & $C_A$ & [insert] \% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: matched preoperative and postoperative 3D reconstructions with
+    constriction length and cross-sectional measurements}}
+  \caption{Measurement of constriction length and minimum lumen section in the
+  preoperative geometry, with the corresponding postoperative section at the
+  same anatomical location.}
+  \label{fig:anatomical_measurements}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+\section{Volume mesh generation}
+\label{sec:mesh}
+
+The triangulated STL surface is imported into Gmsh. Surface classification and
+geometry creation produce a closed fluid volume. The physical boundary groups
+are:
+
+\begin{itemize}
+  \item \texttt{inlet}: tracheal inlet;
+  \item \texttt{outlet\_1}: upper-right outlet;
+  \item \texttt{outlet\_2}: lower-right outlet;
+  \item \texttt{outlet\_3}: left outlet;
+  \item \texttt{wall}: remaining airway surface; and
+  \item \texttt{fluid}: internal volume.
+\end{itemize}
+
+The physical groups are visually verified whenever the STL topology or Gmsh
+classification changes. The volume consists of first-order tetrahedra with a
+uniform target characteristic length controlled by \texttt{MESH\_SIZE}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Replicable mesh settings and quality metrics. All current volume
+  elements are first-order tetrahedra. Add the exact Gmsh version and final
+  values from each \texttt{checkMesh} log.}
+  \label{tab:meshes}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{@{}lrrrrrr@{}}
+    \toprule
+    Mesh & Target size (mm) & Points & Cells & Element type & Max. aspect ratio & Max. non-orthogonality \\
+    \midrule
+    Coarse   & [insert] & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
+    Baseline & 0.25     & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
+    Fine     & 0.15     & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}
+
+\subsection{Near-wall resolution}
+
+Boundary-layer prism elements are commonly used near no-slip walls because they
+resolve steep wall-normal velocity gradients efficiently and with better cell
+alignment than isotropic tetrahedra. The current Gmsh workflow uses only
+first-order tetrahedra and does not include dedicated inflation layers. This
+must not be presented as a hybrid boundary-layer mesh. Its consequences are
+considered when interpreting wall-adjacent quantities, and adding prism layers
+is identified as a model improvement.
+
+The Gmsh mesh uses millimetres because it inherits the Slicer coordinate scale.
+After \texttt{gmshToFoam}, all coordinates are multiplied by $10^{-3}$ to obtain
+SI units.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: surface and cutaway views of baseline and fine meshes}}
+  \caption{Computational meshes. Include a close-up in the stenotic region to
+  demonstrate the change in resolution.}
+  \label{fig:meshes}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+\section{Mathematical model}
+\label{sec:model}
+
+\subsection{Governing equations}
+
+Air is modelled as an incompressible Newtonian fluid. For steady flow, mass and
+momentum conservation are:
+
+\begin{align}
+  \nabla \cdot \mathbf{u} &= 0, \\
+  \rho (\mathbf{u}\cdot\nabla)\mathbf{u}
+    &= -\nabla p + \mu \nabla^2\mathbf{u},
+\end{align}
+
+where $\mathbf{u}$ is velocity, $p$ is pressure, $\rho$ is density, and $\mu$
+is dynamic viscosity. OpenFOAM uses kinematic pressure and the kinematic
+viscosity $\nu=\mu/\rho$. The configured value is
+$\nu=\SI{1.5e-5}{\metre\squared\per\second}$.
+
+The current case uses the laminar model and the steady-state
+\texttt{simpleFoam} solver. The appropriateness of the laminar assumption should
+be assessed using a Reynolds number based on representative velocity $U$ and
+diameter $D$:
+
+\begin{equation}
+  \mathrm{Re} = \frac{UD}{\nu}.
+\end{equation}
+
+[Calculate Reynolds numbers at the inlet and stenosis and discuss whether a
+laminar, transitional, or turbulent model is justified.]
+
+\subsection{Boundary conditions}
+
+A prescribed volumetric flow rate is applied at the tracheal inlet:
+
+\begin{equation}
+  Q_{\mathrm{in}} = \SI{1.6667e-4}{\metre\cubed\per\second}.
+\end{equation}
+
+This corresponds to approximately \SI{10}{\litre\per\minute}. A no-slip
+condition is applied at the airway wall. The three outlets use zero reference
+pressure with pressure-compatible velocity conditions. Table~\ref{tab:bc}
+summarises the implementation.
+
+\begin{table}[htbp]
+  \centering
+  \caption{OpenFOAM boundary conditions.}
+  \label{tab:bc}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Patch & Velocity $\mathbf{u}$ & Pressure $p$ \\
+    \midrule
+    \texttt{inlet} & \texttt{flowRateInletVelocity} & \texttt{zeroGradient} \\
+    \texttt{outlet\_1--3} & \texttt{pressureInletOutletVelocity} & \texttt{fixedValue 0} \\
+    \texttt{wall} & \texttt{noSlip} & \texttt{zeroGradient} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------------
+\section{Numerical method}
+\label{sec:numerics}
+
+The teaching staff approved the use of 3D Slicer and SlicerVMTK for geometry
+preparation, Gmsh for meshing, OpenFOAM for CFD, and independent local/remote
+compute infrastructure. This changes the software implementation but not the
+required physical analyses or validation.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Software and provenance information. Replace placeholders with the
+  immutable versions used for the final simulations.}
+  \label{tab:software}
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Stage & Software & Version or identifier \\
+    \midrule
+    Segmentation & 3D Slicer + SlicerVMTK & 5.12.2; extension [insert] \\
+    Surface/volume meshing & Gmsh & [insert] \\
+    CFD & OpenFOAM Docker image & 2512; image ID [insert] \\
+    Post-processing & ParaView & [insert] \\
+    Source state & Git & commit [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Steady solver}
+
+The finite-volume discretisation is implemented in OpenFOAM 2512. Pressure is
+solved using GAMG and velocity using a symmetric Gauss--Seidel smoothed solver.
+The SIMPLE algorithm uses two non-orthogonal correctors. The configured residual
+controls are $10^{-5}$ for pressure and $10^{-6}$ for velocity.
+
+The parallel mesh is decomposed using the Scotch method. Simulations are run in
+the \texttt{opencfd/openfoam-default:latest} Docker image. The exact image ID
+and Git commit are recorded in Table~\ref{tab:software}.
+
+\subsection{Transient solver and breathing waveform}
+\label{sec:transient_method}
+
+[Configure and document the Assignment 6 transient postoperative case. State the
+OpenFOAM solver, breathing-cycle duration, inlet flow-rate waveform, time-step
+size, maximum Courant number, number of inner correctors/iterations, write
+interval, number of simulated cycles, and criterion for cycle periodicity.]
+
+\begin{table}[htbp]
+  \centering
+  \caption{Transient postoperative simulation settings.}
+  \label{tab:transient_settings}
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Parameter & Value \\
+    \midrule
+    Solver & [insert] \\
+    Breathing-cycle duration & [insert] \si{\second} \\
+    Time-step size & [insert] \si{\second} \\
+    Maximum Courant number & [insert] \\
+    Simulated cycles & [insert] \\
+    Time-step convergence criterion & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------------
+\section{Verification}
+\label{sec:verification}
+
+\subsection{Mesh quality}
+
+For each case and resolution, report the complete \texttt{checkMesh} summary.
+Particular attention should be paid to:
+
+\begin{itemize}
+  \item maximum non-orthogonality;
+  \item number of severely non-orthogonal faces;
+  \item maximum skewness;
+  \item minimum cell volume;
+  \item maximum aspect ratio; and
+  \item number of disconnected regions.
+\end{itemize}
+
+\subsection{Convergence and mass conservation}
+
+Plot the pressure and velocity residual histories. Verify that the final outlet
+flow rates satisfy:
+
+\begin{equation}
+  Q_{\mathrm{in}} + \sum_{i=1}^{3} Q_{\mathrm{out},i} \approx 0,
+\end{equation}
+
+using a consistent outward-normal sign convention. Report the relative mass
+imbalance.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: steady postoperative residual histories for $U_x$, $U_y$,
+    $U_z$, and $p$ on a logarithmic scale}}
+  \caption{Residual evolution for the steady postoperative simulation. Mark the
+  configured residual criteria and state whether monitored integral quantities
+  were also stable.}
+  \label{fig:steady_residuals}
+\end{figure}
+
+\subsection{Effect of additional steady iterations}
+
+Assignment 4 requests an assessment of whether 1000 additional iterations alter
+an axial-velocity parameter. A fixed centerline-normal section before the
+bifurcation is used, and its area-averaged axial velocity is recorded before and
+after continuation without reinitialising the solution.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Sensitivity of the selected axial-velocity monitor to 1000 additional
+  steady iterations.}
+  \label{tab:additional_iterations}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Parameter & Iteration 2000 & Iteration 3000 & Relative change (\%) \\
+    \midrule
+    Area-averaged axial velocity & [insert] & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Mesh-independence assessment}
+
+At least three postoperative mesh levels are preferred so that a trend can be
+assessed rather than only a pairwise difference. Each parameter of interest is
+plotted against the number of volume elements. For mesh $i$ and the densest mesh
+$d$, the Assignment 5 percentage difference is defined as
+
+\begin{equation}
+  \delta_{\phi,i} =
+  \frac{|\phi_i-\phi_d|}{|\phi_d|}\times 100\%.
+  \label{eq:mesh_difference}
+\end{equation}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Mesh-independence comparison.}
+  \label{tab:mesh_independence}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Quantity & Coarse & Baseline & Fine/reference \\
+    \midrule
+    Pre-bifurcation resistance & [insert] & [insert] & [insert] \\
+    Peak velocity              & [insert] & [insert] & [insert] \\
+    Left-lung flow fraction    & [insert] & [insert] & [insert] \\
+    Right-lung flow fraction   & [insert] & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: one X--Y plot per parameter of interest versus mesh element
+    count, plus percentage difference relative to the densest mesh}}
+  \caption{Postoperative mesh-sensitivity study. The x-axis reports volume
+  element count; each parameter and its percentage difference from the densest
+  mesh are shown separately.}
+  \label{fig:mesh_sensitivity}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+\section{Results}
+\label{sec:results}
+
+\subsection{Velocity field}
+
+[Describe and compare the velocity magnitude, jet formation through stenotic
+regions, secondary flow, separation, and recirculation. Use identical colour
+scales for preoperative and postoperative figures.]
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6cm][c]{0.88\textwidth}{\centering
+    Placeholder: preoperative and postoperative velocity magnitude}}
+  \caption{Velocity magnitude for the preoperative and postoperative cases.
+  State the displayed time/iteration and use a shared colour range.}
+  \label{fig:velocity}
+\end{figure}
+
+\subsection{Pressure distribution}
+
+[Report pressure relative to the outlet reference and quantify pressure losses
+across anatomically relevant sections.]
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6cm][c]{0.88\textwidth}{\centering
+    Placeholder: pressure distribution and centerline pressure plot}}
+  \caption{Static or kinematic pressure distribution. Clearly state whether
+  pressure has been converted to pascals.}
+  \label{fig:pressure}
+\end{figure}
+
+\subsection{Outlet and lung flow distribution}
+
+Outlet flow is obtained by integrating the normal volumetric flux over each
+outlet patch. The anatomically corresponding outlets are then grouped into left
+and right lungs. Report the grouping explicitly and use one outward-normal sign
+convention throughout.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Outlet flow rates and fractions.}
+  \label{tab:outlet_flow}
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    Case & Outlet 1 & Outlet 2 & Outlet 3 & Mass imbalance \\
+    \midrule
+    Preoperative  & [insert] & [insert] & [insert] & [insert] \\
+    Postoperative & [insert] & [insert] & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Postoperative left/right lung flow distribution.}
+  \label{tab:lung_flow}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    Lung & Flow rate (\si{\metre\cubed\per\second}) & Fraction (\%) \\
+    \midrule
+    Left  & [insert] & [insert] \\
+    Right & [insert] & [insert] \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Local resistance before the bifurcation}
+\label{sec:steady_resistance}
+
+Two planes normal to the centerline delimit a fixed section before the
+bifurcation, corresponding approximately to the location of the preoperative
+constriction. These same plane definitions are reused for every mesh and for the
+transient Assignment 6 analysis. With dimensional pressure difference
+$\Delta P$ and volumetric flow $Q$, local resistance is
+
+\begin{equation}
+  R(t)=\frac{\overline{P}_{\mathrm{up}}(t)-
+  \overline{P}_{\mathrm{down}}(t)}{Q(t)}.
+  \label{eq:local_resistance}
+\end{equation}
+
+For the incompressible OpenFOAM pressure field $p$,
+$\Delta P=\rho\,\Delta p$. Area-averaged pressure is used at each plane.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: postoperative geometry with upstream and downstream resistance
+    planes visibly indicated}}
+  \caption{Fixed pre-bifurcation section used to calculate steady and transient
+  local resistance. Plane origins and normals must be archived for reuse.}
+  \label{fig:resistance_section}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Steady postoperative local-resistance calculation.}
+  \label{tab:steady_resistance}
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    Quantity & Value \\
+    \midrule
+    Upstream area-averaged pressure & [insert] \\
+    Downstream area-averaged pressure & [insert] \\
+    Pressure difference $\Delta P$ & [insert] \si{\pascal} \\
+    Volumetric flow $Q$ & [insert] \si{\metre\cubed\per\second} \\
+    Resistance $R=\Delta P/Q$ & [insert] \si{\pascal\second\per\metre\cubed} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------------
+\section{Transient postoperative analysis}
+\label{sec:transient_results}
+
+\subsection{Time-step convergence}
+
+[Plot residual evolution by time step, state the convergence criterion, and
+identify every time step that failed to meet it. Also report the maximum Courant
+number and whether the final simulated cycle is periodic.]
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: transient residuals and convergence status per time step}}
+  \caption{Residual evolution for the postoperative transient simulation.
+  Highlight any time steps that did not satisfy the selected criterion.}
+  \label{fig:transient_residuals}
+\end{figure}
+
+\subsection{Velocity vectors at representative phases}
+
+Select three time points from the imposed breathing waveform, for example
+acceleration, peak inspiratory flow, and deceleration or flow reversal. The
+exact selection must be justified from the waveform rather than chosen only for
+visual appearance.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][6.5cm][c]{0.88\textwidth}{\centering
+    Placeholder: velocity vectors coloured by magnitude at three relevant time
+    points using a common colour scale}}
+  \caption{Postoperative transient velocity vectors at three phases of the
+  breathing cycle. State each time and inlet flow rate.}
+  \label{fig:transient_vectors}
+\end{figure}
+
+\subsection{Breathing waveform and time-varying resistance}
+
+The applied inlet flow rate and the local resistance from
+Equation~\ref{eq:local_resistance} are evaluated over one complete breathing
+cycle. The computational postoperative resistance is compared with the
+constant-diameter expectation and with a qualitative preoperative sketch.
+
+\begin{figure}[htbp]
+  \centering
+  \fbox{\parbox[c][7cm][c]{0.88\textwidth}{\centering
+    Placeholder: (A) applied breathing flow waveform; (B) computed postoperative
+    local resistance; (C) qualitative preoperative/postoperative resistance
+    comparison}}
+  \caption{Breathing-cycle flow rate and local resistance. Resistance near zero
+  flow must be handled carefully because direct division by $Q(t)$ becomes
+  ill-conditioned.}
+  \label{fig:transient_resistance}
+\end{figure}
+
+% -----------------------------------------------------------------------------
+\section{Discussion}
+\label{sec:discussion}
+
+[Interpret the numerical results in relation to the anatomical differences and
+clinical question. Discuss whether pressure losses, velocity peaks, or outlet
+flow distributions improve after intervention. Distinguish numerical evidence
+from physiological inference.]
+
+\subsection{Mesh sensitivity and optimal mesh}
+
+[Interpret the parameter and percentage-difference plots in
+Figure~\ref{fig:mesh_sensitivity}. Select the coarsest mesh for which every
+clinically relevant integral quantity changes by less than the predefined
+acceptance criterion relative to the densest mesh. Justify that choice using
+both numerical accuracy and computational cost.]
+
+\subsection{Constant-diameter resistance during inspiration}
+
+[For fully developed laminar flow in a rigid constant-diameter tube,
+$\Delta P=RQ$ and the Poiseuille resistance is independent of flow rate.
+Therefore an increasing inspiratory flow produces a proportional pressure drop
+but constant $R=\Delta P/Q$. Discuss why developing flow, inertia, geometry,
+separation, or transition can make the computed airway resistance depart from
+this idealisation.]
+
+\subsection{Limitations}
+
+Potential limitations include:
+
+\begin{itemize}
+  \item static CT geometry despite the dynamic nature of tracheomalacia;
+  \item rigid airway walls and absence of fluid--structure interaction;
+  \item steady inlet flow instead of a respiratory waveform;
+  \item idealised outlet pressure conditions;
+  \item uncertainty from segmentation and clipping-point placement;
+  \item an isotropic first-order tetrahedral mesh without dedicated prism
+        boundary layers;
+  \item the selected laminar-flow assumption; and
+  \item analysis of a limited number of anatomical cases.
+\end{itemize}
+
+With additional resources, the mesh study should include at least three
+systematically refined grids, local refinement around the stenosis and branch
+junctions, boundary-layer prism elements, and a formal convergence measure such
+as the grid-convergence index. A temporal-resolution study should likewise be
+performed for the transient model.
+
+\subsection{Handling transient non-convergence}
+
+[Identify unconverged time steps and discuss targeted remedies: reduce the time
+step, constrain the Courant number, increase inner iterations/correctors,
+improve mesh quality, use a better initial condition from a previous cycle, and
+simulate additional cycles until periodic behaviour is obtained. Report which
+changes would be tested first and why.]
+
+% -----------------------------------------------------------------------------
+\section{Conclusions}
+\label{sec:conclusions}
+
+[Summarise the principal quantitative findings, state whether the intervention
+improved the simulated flow characteristics, and report whether the conclusions
+were robust to mesh refinement.]
+
+% -----------------------------------------------------------------------------
+\section*{Reproducibility statement}
+\addcontentsline{toc}{section}{Reproducibility statement}
+
+The complete workflow is documented in \texttt{WORKFLOW.md}. Record the Git
+commit, Slicer version, Gmsh version, OpenFOAM image identifier, mesh sizes,
+cell counts, and solver settings used for the final results. The scripts
+\texttt{create\_volume\_mesh.sh}, \texttt{run\_cfd.sh},
+\texttt{run\_fine\_cfd.sh}, and \texttt{fetch\_cfd\_results.sh} automate the
+meshing, remote execution, reconstruction, and retrieval stages.
+
+% -----------------------------------------------------------------------------
+% References
+% -----------------------------------------------------------------------------
+\begin{thebibliography}{9}
+
+\bibitem{openfoam}
+OpenCFD Ltd.,
+\textit{OpenFOAM User Guide},
+\url{https://www.openfoam.com/documentation/}.
+
+\bibitem{gmsh}
+C.~Geuzaine and J.-F.~Remacle,
+``Gmsh: A three-dimensional finite element mesh generator with built-in pre-
+and post-processing facilities,''
+\textit{International Journal for Numerical Methods in Engineering},
+vol.~79, no.~11, pp.~1309--1331, 2009.
+
+\bibitem{slicer}
+A.~Fedorov et al.,
+``3D Slicer as an image computing platform for the Quantitative Imaging
+Network,''
+\textit{Magnetic Resonance Imaging}, vol.~30, no.~9, pp.~1323--1341, 2012.
+
+\bibitem{vmtk}
+L.~Antiga et al.,
+``An image-based modeling framework for patient-specific computational
+hemodynamics,''
+\textit{Medical \& Biological Engineering \& Computing}, vol.~46,
+pp.~1097--1112, 2008.
+
+\end{thebibliography}
+
+\end{document}
