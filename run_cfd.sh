@@ -118,7 +118,16 @@ docker run --rm \
         echo '--- Checking mesh'
         checkMesh
 
-        echo '--- Removing previous domain decomposition'
+        echo '--- Removing previous CFD results and domain decomposition'
+        # Remove numeric result-time directories while preserving 0/, which
+        # contains the initial and boundary conditions. This avoids mixing
+        # fields generated with an older boundary-patch configuration into the
+        # new reconstructed case.
+        for time_dir in [0-9]*; do
+            if [[ -d \"\${time_dir}\" && \"\${time_dir}\" != '0' && \"\${time_dir}\" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+                rm -rf -- \"\${time_dir}\"
+            fi
+        done
         rm -rf processor*
 
         echo '--- Decomposing case'

@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Downloaded CFD results are local visualization artifacts.
+results/
+
 # Include only run files for openFOAM; exclude solutions.
 # Ignore everything in the OpenFOAM case
 openFOAM/postop/*

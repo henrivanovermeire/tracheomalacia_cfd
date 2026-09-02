@@ -77,3 +77,4 @@ echo "======================================"
 echo "VOLUME MESH CREATION COMPLETE"
 echo "======================================"
 echo "Mesh: ${MESH_FILE}"
+mesh
