@@ -119,7 +119,7 @@ docker run --rm \
         decomposePar -force
 
         echo '--- Running simpleFoam in parallel'
-        mpirun --use-hwthread-cpus -np ${NPROCS} simpleFoam -parallel 2>&1 | tee log.simpleFoam.parallel
+        mpirun --allow-run-as-root --use-hwthread-cpus -np ${NPROCS} simpleFoam -parallel 2>&1 | tee log.simpleFoam.parallel
 
         echo '--- Reconstructing latest result'
         reconstructPar -latestTime
