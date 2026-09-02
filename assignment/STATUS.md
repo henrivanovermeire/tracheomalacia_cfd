@@ -282,7 +282,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Centerline-directed adaptive extensions | ✅ | Implemented through SlicerVMTK logic |
 | Flat CFD caps | ✅ | `AirwayExtendedSurfaceCapped` model |
 | STL export | ✅ | `segmentation/scripts/export_segmentation.py` → `meshes/<case>/airways.stl` |
-| Preoperative final surface verification | ⚠️ | Must be visually verified and documented separately |
+| Preoperative final surface verification | 🟡 | Cleaned segmentation, refined points, boundary map, and case-specific STL now exist; annotated report figure and measurements remain |
 | Postoperative final surface verification | 🟡 | Workflow validated interactively; report image still needed |
 
 ## Meshing
@@ -290,7 +290,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Item | Status | Evidence/notes |
 |---|---:|---|
 | Gmsh geometry definition | 🟡 | Verified postoperative definition in `meshes/postop/airways.geo`; preoperative definition pending |
-| Physical inlet/outlet/wall groups | 🟡 | IDs identified for current postoperative STL; must be rechecked after geometry/Gmsh changes |
+| Physical inlet/outlet/wall groups | 🟡 | Postoperative IDs verified; preoperative Gmsh cap IDs still require inspection |
 | Separate mesh-generation script | ✅ | `create_volume_mesh.sh` |
 | Baseline mesh preserved for reproducibility | ✅ | `openFOAM/postop/airways.msh` intended for version control |
 | Baseline `checkMesh` metrics recorded in report | ⬜ | Add final values to `report/report.tex` |

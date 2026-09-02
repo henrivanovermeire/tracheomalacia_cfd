@@ -129,6 +129,13 @@ if segmentation_node is None:
         "AirwayLungSegmentation node was not found. Run segment_airway.py first."
     )
 
+scene_case = segmentation_node.GetAttribute("AirwayCase")
+if scene_case is not None and scene_case != CASE:
+    raise RuntimeError(
+        f"CASE mismatch: calculate_centerline.py is set to '{CASE}', but the "
+        f"live segmentation is tagged '{scene_case}'."
+    )
+
 segmentation = segmentation_node.GetSegmentation()
 airways_segment_id = segmentation.GetSegmentIdBySegmentName("Airways")
 

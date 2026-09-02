@@ -65,6 +65,18 @@ if not airways_segment_id:
         f"'{AIRWAYS_SEGMENT_NAME}'. The existing scene segmentation was kept."
     )
 
+# Validate nonempty geometry before removing the current scene node.
+loaded_node.CreateClosedSurfaceRepresentation()
+closed_surface = loaded_segmentation.GetSegment(
+    airways_segment_id
+).GetRepresentation("Closed surface")
+if closed_surface is None or closed_surface.GetNumberOfPoints() == 0:
+    slicer.mrmlScene.RemoveNode(loaded_node)
+    raise RuntimeError(
+        "The cleaned Airways segment has an empty closed surface. "
+        "The existing scene segmentation was kept."
+    )
+
 if existing_node is not None and existing_node is not loaded_node:
     slicer.mrmlScene.RemoveNode(existing_node)
 
@@ -72,16 +84,8 @@ if existing_node is not None and existing_node is not loaded_node:
 # cut_airways_centerline.py. Loading while the original node still existed may
 # have caused Slicer to append a numeric suffix.
 loaded_node.SetName(SEGMENTATION_NODE_NAME)
+loaded_node.SetAttribute("AirwayCase", CASE)
 loaded_node.CreateDefaultDisplayNodes()
-loaded_node.CreateClosedSurfaceRepresentation()
-
-closed_surface = loaded_segmentation.GetSegment(
-    airways_segment_id
-).GetRepresentation("Closed surface")
-if closed_surface is None or closed_surface.GetNumberOfPoints() == 0:
-    raise RuntimeError(
-        "The cleaned Airways segment was loaded, but its closed surface is empty."
-    )
 
 display_node = loaded_node.GetDisplayNode()
 if display_node is not None:

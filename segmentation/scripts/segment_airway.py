@@ -148,6 +148,7 @@ segmentation_node = (
         "AirwayLungSegmentation"
     )
 )
+segmentation_node.SetAttribute("AirwayCase", CASE)
 
 # ============================================================
 # CREATE DISPLAY NODES

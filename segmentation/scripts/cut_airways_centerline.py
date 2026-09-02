@@ -203,6 +203,13 @@ def ensure_cut_endpoints_node():
 def get_airway_surface_polydata():
 
     segmentation_node = slicer.util.getNode("AirwayLungSegmentation")
+    scene_case = segmentation_node.GetAttribute("AirwayCase")
+    if scene_case is not None and scene_case != CASE:
+        raise RuntimeError(
+            f"CASE mismatch: cut_airways_centerline.py is set to '{CASE}', "
+            f"but the live segmentation is tagged '{scene_case}'."
+        )
+
     segmentation = segmentation_node.GetSegmentation()
     airways_segment_id = segmentation.GetSegmentIdBySegmentName("Airways")
 
@@ -579,6 +586,7 @@ capped_surface_model_node = add_model_node(
     opacity=0.4
 )
 
+capped_surface_model_node.SetAttribute("AirwayCase", CASE)
 capped_surface_model_node.SetAttribute("BoundaryPatch.wall", str(WALL_ENTITY_ID))
 
 for info in boundary_info:

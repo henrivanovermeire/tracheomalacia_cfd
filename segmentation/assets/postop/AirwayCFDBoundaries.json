@@ -1,44 +1,44 @@
 {
-    "wall": {
-        "patch_name": "wall",
-        "entity_id": 1
+  "wall": {
+    "patch_name": "wall",
+    "entity_id": 1
+  },
+  "caps": {
+    "airwaycutendpoint_4": {
+      "label": "AirwayCutEndpoint-4",
+      "entity_id": 2,
+      "barycenter_ras": [
+        -7.389974040985107,
+        97.91764907836914,
+        1312.050595703125
+      ]
     },
-    "caps": {
-        "f_4": {
-            "label": "F-4",
-            "entity_id": 2,
-            "barycenter_ras": [
-                4.274958002567291,
-                10.510249748229981,
-                -21.276556282043458
-            ]
-        },
-        "f_3": {
-            "label": "F-3",
-            "entity_id": 3,
-            "barycenter_ras": [
-                21.983062705993653,
-                -15.44088357925415,
-                -62.565414581298825
-            ]
-        },
-        "f_2": {
-            "label": "F-2",
-            "entity_id": 4,
-            "barycenter_ras": [
-                -5.4395183753967284,
-                -20.42845184326172,
-                -68.60854675292968
-            ]
-        },
-        "f_1": {
-            "label": "F-1",
-            "entity_id": 5,
-            "barycenter_ras": [
-                17.5431685256958,
-                -19.582978515625,
-                -75.46395858764649
-            ]
-        }
+    "airwaycutendpoint_3": {
+      "label": "AirwayCutEndpoint-3",
+      "entity_id": 3,
+      "barycenter_ras": [
+        21.803439292907715,
+        102.53256759643554,
+        1322.5978271484375
+      ]
+    },
+    "airwaycutendpoint_2": {
+      "label": "AirwayCutEndpoint-2",
+      "entity_id": 4,
+      "barycenter_ras": [
+        18.006762771606446,
+        100.92460601806641,
+        1311.3104443359375
+      ]
+    },
+    "airwaycutendpoint_1": {
+      "label": "AirwayCutEndpoint-1",
+      "entity_id": 5,
+      "barycenter_ras": [
+        1.1494695983827115,
+        128.0451203918457,
+        1364.460419921875
+      ]
     }
+  }
 }

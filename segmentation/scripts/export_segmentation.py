@@ -40,6 +40,13 @@ if model_node is None or not model_node.IsA("vtkMRMLModelNode"):
         "Run cut_airways_centerline.py first."
     )
 
+model_case = model_node.GetAttribute("AirwayCase")
+if model_case is not None and model_case != CASE:
+    raise RuntimeError(
+        f"CASE mismatch: export_segmentation.py is set to '{CASE}', but "
+        f"'{MODEL_NODE_NAME}' is tagged '{model_case}'."
+    )
+
 surface = model_node.GetPolyData()
 if surface is None or surface.GetNumberOfPoints() == 0:
     raise RuntimeError(f"Model node '{MODEL_NODE_NAME}' has no surface data.")
