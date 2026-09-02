@@ -43,67 +43,27 @@ https://doi.org/10.1016/j.clinbiomech.2017.10.018
 
 Repository copy: `assignment/arcticle.pdf`.
 
-## Work sequence
+## Completion record
 
-### 1.1 Create a structured evidence sheet
+**Status: complete.** The final standalone response is in
+`assignment/ASSIGNMENT_1.md` and the same content is integrated into
+`report/report.tex` under “Critical review of a selected CFD paper.”
 
-- [ ] Read the complete paper once without drafting.
-- [ ] On the second reading, extract page/figure/table references for:
-  - research question;
-  - four CT-derived geometries;
-  - segmentation and geometry extent;
-  - inlet and outlet boundary conditions;
-  - unsteady RANS and low-Reynolds-number `k–ω` model;
-  - temporal and spatial discretisation;
-  - mesh sensitivity;
-  - inspiration and expiration findings;
-  - wall shear stress and pressure results;
-  - author-stated limitations; and
-  - conclusions about stent effectiveness.
-- [ ] Save these notes in `assignment/assignment_1_notes.md`.
-- [ ] Distinguish direct statements from personal criticism.
-
-### 1.2 Verify key numerical details
-
-- [ ] Record the three mesh sizes/cell counts and reported percentage changes.
-- [ ] Record inspiration/expiration duration and waveform description.
-- [ ] Record inlet/outlet strategy and extension lengths.
-- [ ] Record the reported pressure, velocity, wall shear stress, and turbulence
-      findings used in the final Results section.
-- [ ] Record sample size and model assumptions used in Limitations.
-
-### 1.3 Select figures
-
-Use at most three. A strong initial choice is:
-
-- [ ] Geometry comparison showing pre-/post-stent inspiration/expiration.
-- [ ] Velocity comparison at peak inspiration/expiration.
-- [ ] Pressure/velocity axial comparison or expiratory wall shear stress.
-
-For every selected figure:
-
-- [ ] Verify readability at report scale.
-- [ ] Record the original figure number and page.
-- [ ] Write a caption that states it is reproduced/adapted from Taherian et al.
-- [ ] Add the full paper citation to the LaTeX bibliography.
-
-### 1.4 Draft the five required sections
-
-- [ ] **Goal:** one explicit research question and clinical motivation.
-- [ ] **Methods:** geometry, boundary conditions, solver/model, and comparison
-      design; omit low-value implementation detail.
-- [ ] **Results:** quantitative, separated into inspiration and expiration.
-- [ ] **Limitations:** include both author-stated and critical limitations.
-- [ ] **Evaluation:** directly answer whether the study answered its question;
-      separate internal evidence from generalisability.
-- [ ] Count each section independently and keep each at or below 150 words.
-
-## Definition of done
-
-- Five correctly headed sections, each ≤150 words.
-- No more than three numbered, captioned, and cited figures.
-- Every quantitative claim traceable to the paper.
-- Evaluation gives a defensible yes/partly/no judgement.
+- [x] Extracted the research question, methods, quantitative results,
+      limitations, and conclusions from the full paper.
+- [x] Verified the four-geometry design, boundary-condition method, unsteady
+      RANS model, mesh study, respiratory timing, and key outcome values.
+- [x] Distinguished patient-specific evidence from broader clinical
+      generalisability.
+- [x] Added the full citation and DOI to the LaTeX bibliography.
+- [x] Completed **Goal** in 97 words.
+- [x] Completed **Methods** in 129 words.
+- [x] Completed **Results** in 119 words.
+- [x] Completed **Limitations** in 127 words.
+- [x] Completed **Evaluation** in 132 words.
+- [x] Chose not to use optional reproduced figures, remaining below the maximum
+      of three and avoiding unnecessary page use.
+- [x] Rebuilt `report/report.pdf` successfully.
 
 ---
 
@@ -535,11 +495,11 @@ and every quantity uses the same Assignment 4 section definition.
 
 Work strictly in this order:
 
-1. [ ] Create `assignment/assignment_1_notes.md` and complete the structured
-       second reading of Taherian et al.
-2. [ ] Draft the five Assignment 1 sections and select no more than three
-       figures.
-3. [ ] Review the Assignment 2 lecture and submit the prepared questions.
+1. [x] Complete the structured review of Taherian et al. and verify key
+       numerical details.
+2. [x] Complete all five Assignment 1 sections; optional figures were not used.
+3. [ ] **Next:** review the Assignment 2 lecture and submit the prepared
+       questions.
 4. [ ] Freeze the postoperative geometry and complete/freeze the preoperative
        geometry.
 5. [ ] Perform Assignment 3 cross-sectional measurements and annotated figures.

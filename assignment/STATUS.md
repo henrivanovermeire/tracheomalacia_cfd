@@ -26,7 +26,7 @@ word-limit compliance must also be present in the final submission.
 | Area | Status | Summary |
 |---|---:|---|
 | Course specification extraction | ✅ | Assignments 1–6 are recorded, including manually supplied Assignment 2 |
-| Assignment 1 response | 🟡 | Paper and requirements identified; structured critical analysis and figure selection remain |
+| Assignment 1 response | ✅ | Five reviewed sections are within 150 words, integrated into LaTeX, and properly cited; optional figures were not used |
 | Assignment 2 response | 🟡 | Two questions prepared; lecture review and Teams submission require confirmation |
 | Reproducible processing workflow | ✅ | Slicer-to-Gmsh-to-OpenFOAM workflow documented and scripted |
 | Preoperative anatomy | 🟡 | Case-specific assets exist, but final report figures and measurements are not documented |
@@ -52,13 +52,14 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Select a scientific paper | ✅ | `assignment/arcticle.pdf` | None |
 | Record complete paper citation | ✅ | Citation and DOI recorded in `ASSIGNMENT.md` | None |
 | Extract Assignment 1 requirements | ✅ | Five required headings and limits recorded | None |
-| Goal, max. 150 words | 🟡 | Research goal identified in extraction notes | Verify against full paper and draft final text |
-| Methods, max. 150 words | 🟡 | Main geometry, solver, boundary-condition, and mesh methods identified | Select essential details and draft final text |
-| Results, max. 150 words | 🟡 | Principal inspiratory/expiratory findings identified | Verify quantitative values and draft final text |
-| Limitations, max. 150 words | 🟡 | Principal limitations identified | Separate author-stated and independently identified limitations |
-| Evaluation, max. 150 words | ⬜ | No final critical judgement drafted | Assess whether evidence answers the question and delimit generalisability |
-| Select no more than three figures | ⬜ | Candidate paper figures not selected | Choose only figures that materially support methods/results |
-| Number, caption, and reference figures | ⬜ | No extracted figures in report | Extract at publication quality and cite the source |
+| Goal, max. 150 words | ✅ | Final 97-word section in `ASSIGNMENT_1.md` and `report/report.tex` | None |
+| Methods, max. 150 words | ✅ | Final 129-word section includes geometry, boundary conditions, solver, extensions, and mesh study | None |
+| Results, max. 150 words | ✅ | Final 119-word section includes pressure, velocity, wall shear stress, turbulence, and spirometry findings | None |
+| Limitations, max. 150 words | ✅ | Final 127-word section distinguishes key model and generalisability limitations | None |
+| Evaluation, max. 150 words | ✅ | Final 132-word critical judgement answers the research question with appropriate scope | None |
+| Select no more than three figures | N/A | No optional paper figures were used | None |
+| Number, caption, and reference figures | N/A | No paper figures were reproduced | None |
+| Cite selected paper | ✅ | Full citation and DOI included in Markdown and LaTeX bibliography | None |
 
 ---
 
