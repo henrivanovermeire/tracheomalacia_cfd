@@ -17,7 +17,7 @@ import vtk
 
 # Keep this in sync with segment_airway.py, calculate_centerline.py,
 # load_cutting_points.py, and cut_airways_centerline.py.
-CASE = "postop"
+CASE = "preop"
 
 MODEL_NODE_NAME = "AirwayExtendedSurfaceCapped"
 PROJECT_PATH = Path("/home/hvoverme/tracheomalacia_cfd")
