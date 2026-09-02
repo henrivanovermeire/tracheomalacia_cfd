@@ -16,6 +16,13 @@ endpoints_path = (
     project_path / "segmentation" / "assets" / CASE / "CenterlineEndpoints.json"
 )
 
+if not endpoints_path.is_file():
+    raise FileNotFoundError(
+        f"Centerline endpoint markup not found: {endpoints_path}\n"
+        "Run prepare_centerline_endpoints.py in Slicer, place the four "
+        "case-specific points, and export the node to this path first."
+    )
+
 with open(endpoints_path, "r") as endpoints_file:
     endpoints_data = json.load(endpoints_file)
 

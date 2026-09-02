@@ -47,11 +47,21 @@ patient's anatomy.
 In the Slicer Python console, run the following commands in order:
 ```
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
+```
 
+For a new case without `CenterlineEndpoints.json`, run
+`prepare_centerline_endpoints.py`, place one proximal and three distal points,
+and export the markup to the case asset directory. Then continue:
+
+```python
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
 
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
 ```
+
+For a new case without `refined_endpoints.json`, run
+`prepare_cutting_points.py` after centerline calculation, place/export the four
+cut points, and skip `load_cutting_points.py` for that first run.
 At this point, review/adjust the loaded `AirwayCutEndpoints` points in the
 Markups module, then run:
 ```
@@ -61,7 +71,8 @@ exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segment
 ```
 
 The export script writes the capped and extended CFD surface to
-`meshes/airways.stl`.
+`meshes/<case>/airways.stl`. `create_volume_mesh.sh` reads both
+`meshes/<case>/airways.stl` and `meshes/<case>/airways.geo`.
 
 ## Meshing and CFD
 

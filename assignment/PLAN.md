@@ -112,11 +112,20 @@ required by Assignment 3.
 Run the Slicer scripts with `CASE = "preop"`:
 
 1. `segment_airway.py`
-2. `calculate_centerline.py`
-3. `load_cutting_points.py`
-4. Adjust `AirwayCutEndpoints` in the UI.
-5. `cut_airways_centerline.py`
-6. `export_segmentation.py`
+2. `remove_lungs.py` to substitute the manually cleaned preoperative
+   `AirwayLungSegmentation.seg.nrrd` into the live scene.
+3. `prepare_centerline_endpoints.py`
+4. Place one proximal and three distal points; export
+   `segmentation/assets/preop/CenterlineEndpoints.json`.
+5. `calculate_centerline.py`
+6. `prepare_cutting_points.py`
+7. Place/adjust `AirwayCutEndpoints` and export
+   `segmentation/assets/preop/refined_endpoints.json`.
+8. `cut_airways_centerline.py` (it reuses the adjusted scene node).
+9. `export_segmentation.py`
+
+On later runs, use `load_cutting_points.py` instead of steps 5–6 to restore the
+saved refined points.
 
 Then:
 
@@ -128,11 +137,13 @@ Then:
 
 ## 3.3 Improve case-specific file organisation
 
-Before repeated exports, prevent `meshes/airways.stl` from being overwritten:
+Case-specific export organisation is now implemented:
 
-- [ ] Create `meshes/preop/` and `meshes/postop/`.
-- [ ] Make STL and Gmsh paths case-specific.
-- [ ] Keep separately verified physical-surface mappings for both anatomies.
+- [x] Created `meshes/preop/` and `meshes/postop/`.
+- [x] Made STL and Gmsh input paths case-specific.
+- [x] Preserved the verified postoperative STL and Gmsh definition.
+- [ ] Export the final preoperative STL to `meshes/preop/airways.stl`.
+- [ ] Create and verify `meshes/preop/airways.geo` after inspecting its cap IDs.
 
 ## 3.4 Measure the preoperative constriction
 

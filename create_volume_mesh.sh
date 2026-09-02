@@ -14,8 +14,9 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CASE_NAME="${1:-postop}"
 MESH_SIZE="${MESH_SIZE:-0.25}"
 
-GEO_FILE="${SCRIPT_DIR}/meshes/airways.geo"
-STL_FILE="${SCRIPT_DIR}/meshes/airways.stl"
+MESH_ASSET_DIR="${SCRIPT_DIR}/meshes/${CASE_NAME}"
+GEO_FILE="${MESH_ASSET_DIR}/airways.geo"
+STL_FILE="${MESH_ASSET_DIR}/airways.stl"
 CASE_DIR="${SCRIPT_DIR}/openFOAM/${CASE_NAME}"
 MESH_FILE="${CASE_DIR}/airways.msh"
 
@@ -36,7 +37,7 @@ fi
 
 if [[ ! -f "${STL_FILE}" ]]; then
     echo "Error: airway STL not found: ${STL_FILE}" >&2
-    echo "Run segmentation/scripts/export_segmentation.py in Slicer first." >&2
+    echo "Run segmentation/scripts/export_segmentation.py in Slicer with CASE='${CASE_NAME}' first." >&2
     exit 1
 fi
 

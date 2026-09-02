@@ -107,7 +107,34 @@ Inspect the segmentation in 2D and 3D. Confirm that:
 
 Segmentation thresholds and seed coordinates are case-specific.
 
-## 4. Calculate the centerline
+For the preoperative case, the permissive HU range intentionally preserves the
+narrow stenosis but may also include the lungs. After manually cleaning the
+`Airways` segment and exporting it as
+`segmentation/assets/preop/AirwayLungSegmentation.seg.nrrd`, replace the live
+scene node with that file by running:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/remove_lungs.py").read())
+```
+
+This is a data substitution only. It keeps the node name
+`AirwayLungSegmentation` and segment name `Airways`, so all downstream scripts
+continue from the loaded scene node without another save/reload cycle.
+
+## 4. Prepare centerline endpoints for a new case
+
+If `segmentation/assets/<case>/CenterlineEndpoints.json` does not exist, run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/prepare_centerline_endpoints.py").read())
+```
+
+Place four anatomy-specific points: one proximal tracheal endpoint and one at
+each of the three retained distal branch ends. Export the completed markup as
+`segmentation/assets/<case>/CenterlineEndpoints.json`. Never copy endpoint
+coordinates from the other anatomy.
+
+## 5. Calculate the centerline
 
 Run:
 
@@ -121,9 +148,15 @@ This creates the centerline/network used to orient clipping and flow extensions.
 AirwayNetworkModel
 ```
 
-## 5. Load and inspect refined cutting points
+## 6. Prepare or load refined cutting points
 
-Run:
+For a new case without `refined_endpoints.json`, run
+`prepare_cutting_points.py`, place the four desired CFD cut points, and export
+the node to `segmentation/assets/<case>/refined_endpoints.json`. In that same
+scene, proceed directly to clipping because the clipping script reuses the
+adjusted node.
+
+For an existing exported markup, run:
 
 ```python
 exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
@@ -137,7 +170,7 @@ AirwayCutEndpoints
 
 Review every point in the Slicer UI. Move points as needed so each cut is made at a suitable airway cross-section. These refined points are deliberately separate from the original `CenterlineEndpoints` used during centerline extraction.
 
-## 6. Clip, extend, and cap the airway
+## 7. Clip, extend, and cap the airway
 
 Run:
 
@@ -163,7 +196,7 @@ AirwayExtendedSurfaceCapped
 
 Inspect the model before export. In particular, verify that all four ends have straight, natural extensions and planar caps.
 
-## 7. Export the CFD surface
+## 8. Export the CFD surface
 
 Run in the Slicer Python console:
 
@@ -174,14 +207,14 @@ exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segment
 This triangulates and cleans a copy of `AirwayExtendedSurfaceCapped` and writes:
 
 ```text
-meshes/airways.stl
+meshes/<case>/airways.stl
 ```
 
 The STL coordinates are in millimetres. `run_cfd.sh` scales the converted OpenFOAM mesh to metres.
 
-## 8. Verify Gmsh physical surfaces
+## 9. Verify Gmsh physical surfaces
 
-`meshes/airways.geo` imports `airways.stl`, classifies its surfaces, creates a volume, and assigns physical groups.
+`meshes/<case>/airways.geo` imports the case-specific `airways.stl`, classifies its surfaces, creates a volume, and assigns physical groups.
 
 The required physical surfaces are:
 
@@ -199,7 +232,7 @@ The required volume is:
 fluid
 ```
 
-For the currently inspected postoperative geometry, the elementary-surface mapping is documented in `meshes/airways.geo` as:
+For the currently inspected postoperative geometry, the elementary-surface mapping is documented in `meshes/postop/airways.geo` as:
 
 ```geo
 inlet[]   = {25}; // tracheal inlet
@@ -219,12 +252,12 @@ These elementary IDs are not affected by changing only `MESH_SIZE`. They can cha
 Open the geometry on the same machine that creates the volume mesh:
 
 ```bash
-gmsh meshes/airways.geo
+gmsh meshes/postop/airways.geo
 ```
 
 Use Gmsh's elementary-entity visibility controls to verify all four cap IDs. Do not run CFD if any cap is assigned to `wall`.
 
-## 9. Create a volume mesh
+## 10. Create a volume mesh
 
 Make the scripts executable once after cloning:
 

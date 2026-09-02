@@ -300,7 +300,8 @@ interface, with \texttt{AirwayNetworkModel} providing the centerline direction.
 Flow extensions are aligned with the local centerline and adapt to the airway
 radius at each clipping location. Planar caps close the extensions for CFD. The
 final Slicer model is \texttt{AirwayExtendedSurfaceCapped} and is exported as
-\texttt{meshes/airways.stl}.
+\texttt{meshes/<case>/airways.stl}, preventing the two anatomies from
+silently overwriting one another.
 
 \begin{figure}[htbp]
   \centering

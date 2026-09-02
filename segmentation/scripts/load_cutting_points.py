@@ -54,6 +54,13 @@ def control_point_to_ras(control_point, coordinate_system):
 # LOAD REFINED CUT POINTS INTO THE SCENE
 # ============================================================
 
+if not cut_endpoints_path.is_file():
+    raise FileNotFoundError(
+        f"Refined cutting-point markup not found: {cut_endpoints_path}\n"
+        "After calculating the centerline, create and export the four "
+        "case-specific cutting points as refined_endpoints.json."
+    )
+
 print("")
 print("======================================")
 print("Loading airway cut points")

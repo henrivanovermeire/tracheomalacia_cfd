@@ -14,7 +14,8 @@ project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 # case-specific script (calculate_centerline.py, load_cutting_points.py,
 # cut_airways_centerline.py) exposes the same CASE variable and should be
 # kept in sync with this one.
-CASE = "postop"
+
+CASE = "preop"
 
 source_folder = project_path / "segmentation" / "source" / f"DICOM_{CASE}"
 
