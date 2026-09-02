@@ -17,9 +17,9 @@ CreateGeometry;
 
 // Cap elementary-surface IDs for this airway geometry.
 inlet[]   = {25}; // tracheal inlet
-outlet1[] = {23}; // upper-right outlet
-outlet2[] = {24}; // lower-right outlet
-outlet3[] = {22}; // left outlet
+outlet1[] = {23}; // right superior lobar bronchus
+outlet2[] = {24}; // right inferior lobar bronchus
+outlet3[] = {22}; // left main bronchus
 
 all[] = Surface{:};
 
@@ -59,5 +59,8 @@ DefineConstant[
 Mesh.MeshSizeMin = lc;
 Mesh.MeshSizeMax = lc;
 
-Mesh.Algorithm3D = 1;
+// HXT avoids the severe sliver cells observed with the legacy Delaunay
+// algorithm during systematic refinement of this discrete airway surface.
+Mesh.Algorithm3D = 10;
 Mesh.Optimize = 1;
+Mesh.OptimizeNetgen = 1;

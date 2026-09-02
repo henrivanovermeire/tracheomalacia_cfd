@@ -116,7 +116,7 @@ docker run --rm \
         done
 
         echo '--- Checking mesh'
-        checkMesh
+        checkMesh -allTopology -allGeometry 2>&1 | tee log.checkMesh.initial
 
         echo '--- Removing previous CFD results and domain decomposition'
         # Remove numeric result-time directories while preserving 0/, which
@@ -156,7 +156,7 @@ docker run --rm \
         fi
 
         echo '--- Final mesh check'
-        checkMesh
+        checkMesh -allTopology -allGeometry 2>&1 | tee log.checkMesh.final
 
         if [[ \${solver_status} -ne 0 ]]; then
             echo \"Error: simpleFoam/mpirun exited with status \${solver_status}.\" >&2

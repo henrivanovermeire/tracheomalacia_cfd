@@ -7,14 +7,16 @@
 # Examples:
 #   ./create_volume_mesh.sh postop
 #   MESH_SIZE=0.2 ./create_volume_mesh.sh postop
+#   MESH_SOURCE_CASE=postop MESH_SIZE=0.25 ./create_volume_mesh.sh postop_assignment4
 
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CASE_NAME="${1:-postop}"
 MESH_SIZE="${MESH_SIZE:-0.25}"
+MESH_SOURCE_CASE="${MESH_SOURCE_CASE:-${CASE_NAME}}"
 
-MESH_ASSET_DIR="${SCRIPT_DIR}/meshes/${CASE_NAME}"
+MESH_ASSET_DIR="${SCRIPT_DIR}/meshes/${MESH_SOURCE_CASE}"
 GEO_FILE="${MESH_ASSET_DIR}/airways.geo"
 STL_FILE="${MESH_ASSET_DIR}/airways.stl"
 CASE_DIR="${SCRIPT_DIR}/openFOAM/${CASE_NAME}"
@@ -55,6 +57,7 @@ echo "======================================"
 echo "Generating Gmsh volume mesh"
 echo "======================================"
 echo "Case:      ${CASE_NAME}"
+echo "Source:    ${MESH_SOURCE_CASE}"
 echo "Geometry:  ${GEO_FILE}"
 echo "STL:       ${STL_FILE}"
 echo "Mesh size: ${MESH_SIZE} mm"

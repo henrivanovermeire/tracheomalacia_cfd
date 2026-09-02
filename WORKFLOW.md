@@ -66,7 +66,7 @@ Override this with `REMOTE_REPO` if necessary.
 
 ## 2. Select the anatomical case in Slicer
 
-The segmentation scripts contain a `CASE` variable near the top. Set it consistently to either:
+`segment_airway.py` is the sole case selector. Set its `CASE` value to either:
 
 ```python
 CASE = "postop"
@@ -78,7 +78,11 @@ or:
 CASE = "preop"
 ```
 
-Start from a fresh Slicer scene when changing cases. Case-specific inputs are stored under:
+The script stores this value as the `AirwayCase` attribute on the live
+`AirwayLungSegmentation` node. Centerline, cutting-point, clipping, and export
+scripts read that tag automatically; do not set a second downstream case
+variable. Start from a fresh Slicer scene when changing cases. Case-specific
+inputs are stored under:
 
 ```text
 segmentation/assets/<case>/
@@ -212,7 +216,22 @@ meshes/<case>/airways.stl
 
 The STL coordinates are in millimetres. `run_cfd.sh` scales the converted OpenFOAM mesh to metres.
 
-## 9. Verify Gmsh physical surfaces
+## 9. Measure the preoperative stenosis
+
+After calculating the preoperative centerline and loading the cleaned live
+segmentation, run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/measure_stenosis.py").read())
+```
+
+The script projects `StenosisEndpoints.json` onto `AirwayNetworkModel`, measures
+the centerline arc length, samples centerline-normal lumen sections, and creates
+`PreopStenosisCenterlineSegment`, `PreopMinimumCrossSection`, and
+`PreopMinimumSection` for visual inspection. It writes the full profile and
+summary to `assignment/data/`.
+
+## 10. Verify Gmsh physical surfaces
 
 `meshes/<case>/airways.geo` imports the case-specific `airways.stl`, classifies its surfaces, creates a volume, and assigns physical groups.
 
@@ -236,12 +255,13 @@ For the currently inspected postoperative geometry, the elementary-surface mappi
 
 ```geo
 inlet[]   = {25}; // tracheal inlet
-outlet1[] = {23}; // upper-right outlet
-outlet2[] = {24}; // lower-right outlet
-outlet3[] = {22}; // left outlet
+outlet1[] = {23}; // right superior lobar bronchus
+outlet2[] = {24}; // right inferior lobar bronchus
+outlet3[] = {22}; // left main bronchus
 ```
 
-These elementary IDs are not affected by changing only `MESH_SIZE`. They can change when:
+These elementary IDs are not affected by changing only `MESH_SIZE` or using the
+HXT volume algorithm. They can change when:
 
 - A new STL is exported.
 - Cutting points or flow extensions change.
@@ -257,7 +277,7 @@ gmsh meshes/postop/airways.geo
 
 Use Gmsh's elementary-entity visibility controls to verify all four cap IDs. Do not run CFD if any cap is assigned to `wall`.
 
-## 10. Create a volume mesh
+## 11. Create a volume mesh
 
 Make the scripts executable once after cloning:
 

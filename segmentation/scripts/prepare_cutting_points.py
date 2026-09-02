@@ -11,7 +11,20 @@ from pathlib import Path
 import slicer
 
 
-CASE = "preop"
+segmentation_node = slicer.mrmlScene.GetFirstNodeByName(
+    "AirwayLungSegmentation"
+)
+if segmentation_node is None:
+    raise RuntimeError(
+        "AirwayLungSegmentation node was not found. Run segment_airway.py first."
+    )
+
+CASE = segmentation_node.GetAttribute("AirwayCase")
+if CASE not in {"preop", "postop"}:
+    raise RuntimeError(
+        "The live AirwayLungSegmentation node has no valid AirwayCase tag."
+    )
+
 NODE_NAME = "AirwayCutEndpoints"
 PROJECT_PATH = Path("/home/hvoverme/tracheomalacia_cfd")
 OUTPUT_PATH = (
@@ -22,9 +35,6 @@ OUTPUT_PATH = (
     / "refined_endpoints.json"
 )
 
-
-if CASE not in {"preop", "postop"}:
-    raise ValueError("CASE must be either 'preop' or 'postop'.")
 
 existing_node = slicer.mrmlScene.GetFirstNodeByName(NODE_NAME)
 if existing_node is not None:

@@ -7,15 +7,15 @@
             "coordinateUnits": "mm",
             "locked": false,
             "fixedNumberOfControlPoints": false,
-            "labelFormat": "%N-%d",
+            "labelFormat": "AirwayCutEndpoint-%d",
             "lastUsedControlPointNumber": 4,
             "controlPoints": [
                 {
-                    "id": "1",
-                    "label": "F-1",
+                    "id": "cut-1",
+                    "label": "AirwayCutEndpoint-1",
                     "description": "",
-                    "associatedNodeID": "vtkMRMLScalarVolumeNode1",
-                    "position": [-14.855600357055664, 18.6041202545166, -71.58938598632813],
+                    "associatedNodeID": "",
+                    "position": [-14.15911852388983, 18.0025582545166, -70.27380919034823],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,
                     "locked": false,
@@ -23,10 +23,10 @@
                     "positionStatus": "defined"
                 },
                 {
-                    "id": "2",
-                    "label": "F-2",
+                    "id": "cut-2",
+                    "label": "AirwayCutEndpoint-2",
                     "description": "",
-                    "associatedNodeID": "vtkMRMLScalarVolumeNode1",
+                    "associatedNodeID": "",
                     "position": [2.249289035797119, 18.1381778717041, -65.54112243652344],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,
@@ -35,10 +35,10 @@
                     "positionStatus": "defined"
                 },
                 {
-                    "id": "3",
-                    "label": "F-3",
+                    "id": "cut-3",
+                    "label": "AirwayCutEndpoint-3",
                     "description": "",
-                    "associatedNodeID": "vtkMRMLScalarVolumeNode1",
+                    "associatedNodeID": "",
                     "position": [-17.13233184814453, 15.828594207763672, -62.220848083496094],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,
@@ -47,10 +47,10 @@
                     "positionStatus": "defined"
                 },
                 {
-                    "id": "4",
-                    "label": "F-4",
+                    "id": "cut-4",
+                    "label": "AirwayCutEndpoint-4",
                     "description": "",
-                    "associatedNodeID": "vtkMRMLScalarVolumeNode1",
+                    "associatedNodeID": "",
                     "position": [-3.9313343639125122, -8.529229537667064, -25.619],
                     "orientation": [-1.0, -0.0, -0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 1.0],
                     "selected": true,

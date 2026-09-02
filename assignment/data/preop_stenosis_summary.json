@@ -1,0 +1,59 @@
+{
+  "case": "preop",
+  "source_endpoints": "/home/hvoverme/tracheomalacia_cfd/segmentation/assets/preop/StenosisEndpoints.json",
+  "endpoint_labels": [
+    "StenosisSuperior",
+    "StenosisInferior"
+  ],
+  "endpoint_positions_ras_mm": [
+    [
+      2.7988933238152924,
+      -2.6979786275820317,
+      -40.62963183475092
+    ],
+    [
+      4.118454499999999,
+      -8.124462574119093,
+      -49.994
+    ]
+  ],
+  "nearest_network_point_ids": [
+    22,
+    13
+  ],
+  "nearest_network_positions_ras_mm": [
+    [
+      2.173408031463623,
+      -3.310279130935669,
+      -41.31624221801758
+    ],
+    [
+      5.003291130065918,
+      -8.87366008758545,
+      -50.081417083740234
+    ]
+  ],
+  "endpoint_to_network_snap_distances_mm": [
+    1.1124646402313028,
+    1.1627013901342989
+  ],
+  "straight_line_length_mm": 10.903181226323301,
+  "centerline_length_mm": 12.157226830116713,
+  "sample_spacing_mm": 0.25,
+  "valid_cross_section_count": 50,
+  "minimum_section": {
+    "sample_index": 37,
+    "distance_from_superior_mm": 9.17994679008813,
+    "center_x_ras_mm": 2.547750301906922,
+    "center_y_ras_mm": -8.545158488123306,
+    "center_z_ras_mm": -48.46571469038789,
+    "normal_x": 0.5513247121972911,
+    "normal_y": -0.2753402145313889,
+    "normal_z": -0.7875460799104919,
+    "area_mm2": 1.8129506993099282,
+    "perimeter_mm": 6.238759139638849,
+    "minimum_feret_diameter_mm": 0.7980177253533174,
+    "maximum_feret_diameter_mm": 2.8589763627618736,
+    "equivalent_diameter_mm": 1.519315807532018
+  }
+}

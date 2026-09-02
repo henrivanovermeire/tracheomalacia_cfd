@@ -31,11 +31,10 @@ During the segmentation process, the caps of the airways were defined as physica
 ### Running the segmentation scripts
 
 Two patient cases are analysed with the exact same flow: `postop` and
-`preop`. Each script has a `CASE` variable near the top (defaulting to
-`"postop"`) that selects which DICOM series and which case-specific asset
-files (seeds, endpoints, boundary ids, ...) under `segmentation/assets/`
-are used. Set `CASE = "preop"` in every script below before switching to
-the other case, and start from a fresh Slicer scene when doing so.
+`preop`. Select the case only in `segment_airway.py`. It tags the live
+`AirwayLungSegmentation` node with `AirwayCase`; all downstream scripts derive
+their paths from that scene tag. Start from a fresh Slicer scene when changing
+cases.
 
 Note that case-specific markup files (`AirwaySeed.json`,
 `CenterlineEndpoints.json`, `refined_endpoints.json`) must exist under
@@ -109,6 +108,17 @@ Override those defaults when needed:
 ```bash
 MESH_SIZE=0.12 NPROCS=60 ./run_fine_cfd.sh <DROPLET_IP> --visualize
 ```
+
+Run the complete HXT mesh-sensitivity study (0.25, 0.20, 0.15, and 0.12 mm),
+including remote simulation, fetching, fixed-plane analysis, outlet integration,
+and Gnuplot/LaTeX reporting, with:
+
+```bash
+./run_mesh_sensitivity.sh <DROPLET_IP>
+```
+
+Resume interrupted studies without repeating valid fetched cases using `--resume`;
+reanalyze an already fetched complete study using `--skip-runs`.
 
 See [`WORKFLOW.md`](WORKFLOW.md) for installation instructions, the complete
 Slicer-to-ParaView procedure, physical-boundary verification, remote execution,

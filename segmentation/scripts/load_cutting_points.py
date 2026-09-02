@@ -9,8 +9,21 @@ import slicer
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-# Which patient case to process. Keep this in sync with segment_airway.py.
-CASE = "preop"
+segmentation_node = slicer.mrmlScene.GetFirstNodeByName(
+    "AirwayLungSegmentation"
+)
+if segmentation_node is None:
+    raise RuntimeError(
+        "AirwayLungSegmentation node was not found. Run segment_airway.py first."
+    )
+
+CASE = segmentation_node.GetAttribute("AirwayCase")
+if CASE not in {"preop", "postop"}:
+    raise RuntimeError(
+        "The live AirwayLungSegmentation node has no valid AirwayCase tag."
+    )
+
+print("Using scene case:", CASE)
 
 CUT_ENDPOINTS_NODE_NAME = "AirwayCutEndpoints"
 

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "case": "postop_assignment4",
+  "time": 589,
+  "sign_convention": "OpenFOAM outward patch-normal flux; inlet is negative and outlets are positive",
+  "inlet": {
+    "patch": "inlet",
+    "anatomy": "tracheal inlet",
+    "surface_id": 25,
+    "flow_rate_m3_s": -3.3333e-05
+  },
+  "outlets": {
+    "outlet_1": {
+      "anatomy": "right superior lobar bronchus",
+      "surface_id": 23,
+      "flow_rate_m3_s": 3.7426329e-06,
+      "fraction_percent": 11.2280109801098
+    },
+    "outlet_2": {
+      "anatomy": "right inferior lobar bronchus",
+      "surface_id": 24,
+      "flow_rate_m3_s": 2.0645481e-05,
+      "fraction_percent": 61.9370623706237
+    },
+    "outlet_3": {
+      "anatomy": "left main bronchus",
+      "surface_id": 22,
+      "flow_rate_m3_s": 8.9448863e-06,
+      "fraction_percent": 26.83492724927249
+    }
+  },
+  "lungs": {
+    "right": {
+      "patches": ["outlet_1", "outlet_2"],
+      "flow_rate_m3_s": 2.43881139e-05,
+      "fraction_percent": 73.16507335073351
+    },
+    "left": {
+      "patches": ["outlet_3"],
+      "flow_rate_m3_s": 8.9448863e-06,
+      "fraction_percent": 26.83492724927249
+    }
+  },
+  "total_outlet_flow_rate_m3_s": 3.33330002e-05,
+  "absolute_mass_imbalance_m3_s": 1.99999996490334e-13,
+  "relative_mass_imbalance_percent": 6.000059895308974e-07
+}

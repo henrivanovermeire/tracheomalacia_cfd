@@ -119,7 +119,8 @@ fi
 
 echo ""
 echo "--- Creating ${MESH_SIZE} mm volume mesh locally"
-MESH_SIZE="${MESH_SIZE}" "${SCRIPT_DIR}/create_volume_mesh.sh" "${FINE_CASE}"
+MESH_SOURCE_CASE="${BASE_CASE}" MESH_SIZE="${MESH_SIZE}" \
+    "${SCRIPT_DIR}/create_volume_mesh.sh" "${FINE_CASE}"
 
 echo ""
 echo "======================================"

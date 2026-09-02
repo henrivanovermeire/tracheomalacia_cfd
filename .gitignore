@@ -224,6 +224,8 @@ report/*.out
 report/*.toc
 report/*.lof
 report/*.lot
+report/figures/*.aux
+report/figures/*.log
 
 # Downloaded CFD results and generated comparison cases are local artifacts.
 results/

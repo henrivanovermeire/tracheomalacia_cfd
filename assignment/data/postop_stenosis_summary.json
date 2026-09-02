@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "case": "postop",
+  "source_endpoints": "/home/hvoverme/tracheomalacia_cfd/assignment/data/postop_matched_location.json",
+  "endpoint_labels": [
+    "StenosisSuperior",
+    "StenosisInferior"
+  ],
+  "endpoint_positions_ras_mm": [
+    [
+      2.853499860220318,
+      116.8310920102137,
+      1343.8994754955497
+    ],
+    [
+      5.577990489862471,
+      110.49262718796665,
+      1332.8631346384245
+    ]
+  ],
+  "nearest_network_point_ids": [
+    43,
+    57
+  ],
+  "nearest_network_positions_ras_mm": [
+    [
+      2.83233904838562,
+      116.92406463623047,
+      1344.05615234375
+    ],
+    [
+      5.56831169128418,
+      110.55686950683594,
+      1333.02294921875
+    ]
+  ],
+  "endpoint_to_network_snap_distances_mm": [
+    0.18341026118494871,
+    0.1725150856018975
+  ],
+  "straight_line_length_mm": 13.015368032004401,
+  "centerline_length_mm": 13.065247226030674,
+  "sample_spacing_mm": 0.25,
+  "valid_cross_section_count": 54,
+  "minimum_section": {
+    "sample_index": null,
+    "distance_from_superior_mm": 10.188172008464557,
+    "center_x_ras_mm": 5.021986530882955,
+    "center_y_ras_mm": 112.06829872607258,
+    "center_z_ras_mm": 1335.4041702046213,
+    "normal_x": 0.21710902772614368,
+    "normal_y": -0.5400315761979119,
+    "normal_z": -0.8131602343874224,
+    "area_mm2": 5.1687924468410245,
+    "perimeter_mm": 8.177140247915936,
+    "minimum_feret_diameter_mm": 2.2917055704161893,
+    "maximum_feret_diameter_mm": 2.8865665808995766,
+    "equivalent_diameter_mm": 2.565367603647948,
+    "measurement_role": "matched_comparison"
+  },
+  "source_matched_location": "/home/hvoverme/tracheomalacia_cfd/assignment/data/postop_matched_location.json",
+  "matched_section": {
+    "sample_index": null,
+    "distance_from_superior_mm": 10.188172008464557,
+    "center_x_ras_mm": 5.021986530882955,
+    "center_y_ras_mm": 112.06829872607258,
+    "center_z_ras_mm": 1335.4041702046213,
+    "normal_x": 0.21710902772614368,
+    "normal_y": -0.5400315761979119,
+    "normal_z": -0.8131602343874224,
+    "area_mm2": 5.1687924468410245,
+    "perimeter_mm": 8.177140247915936,
+    "minimum_feret_diameter_mm": 2.2917055704161893,
+    "maximum_feret_diameter_mm": 2.8865665808995766,
+    "equivalent_diameter_mm": 2.565367603647948,
+    "measurement_role": "matched_comparison"
+  },
+  "matched_section_projection": {
+    "requested_position_ras_mm": [
+      5.021986530882967,
+      112.06829872607256,
+      1335.4041702046213
+    ],
+    "projected_position_ras_mm": [
+      5.021986530882955,
+      112.06829872607258,
+      1335.4041702046213
+    ],
+    "projection_distance_mm": 3.067753347204868e-14,
+    "distance_from_superior_mm": 10.188172008464557,
+    "source_matching_method": "preoperative normalized centerline distance from tracheal inlet to carina",
+    "source_preop_relative_distance_from_inlet": 0.7653256759696391,
+    "source_postop_distance_from_inlet_mm": 40.21684533684868,
+    "source_matched_section_normal_ras": [
+      0.22076353891514097,
+      -0.5436907854039204,
+      -0.8097306896447307
+    ]
+  },
+  "local_minimum_in_mapped_interval": {
+    "sample_index": 25,
+    "distance_from_superior_mm": 6.162852465108808,
+    "center_x_ras_mm": 3.9964331907707455,
+    "center_y_ras_mm": 114.04390205171536,
+    "center_z_ras_mm": 1338.7458342057776,
+    "normal_x": 0.18079197047030282,
+    "normal_y": -0.45144236773455637,
+    "normal_z": -0.8737929114084656,
+    "area_mm2": 4.6698691675902895,
+    "perimeter_mm": 7.778072610339768,
+    "minimum_feret_diameter_mm": 2.1553337721387846,
+    "maximum_feret_diameter_mm": 2.744679667351742,
+    "equivalent_diameter_mm": 2.438413847753378,
+    "measurement_role": "sampled_interval_local_minimum"
+  }
+}

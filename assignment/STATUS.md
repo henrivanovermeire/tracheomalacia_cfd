@@ -29,11 +29,11 @@ word-limit compliance must also be present in the final submission.
 | Assignment 1 response | ✅ | Five reviewed sections are within 150 words, integrated into LaTeX, and properly cited; optional figures were not used |
 | Assignment 2 response | 🟡 | Two questions prepared; lecture review and Teams submission require confirmation |
 | Reproducible processing workflow | ✅ | Slicer-to-Gmsh-to-OpenFOAM workflow documented and scripted |
-| Preoperative anatomy | 🟡 | Case-specific assets exist, but final report figures and measurements are not documented |
+| Preoperative anatomy | 🟡 | Segmentation and stenosis measurements are complete; final annotated report figure remains |
 | Postoperative anatomy | 🟡 | Segmentation/CFD pipeline has been exercised; final report evidence remains incomplete |
 | Baseline CFD simulation | 🟡 | Simulation and result-fetch workflow work; quantitative findings are not yet entered in the report |
 | Fine-mesh CFD simulation | 🟡 | Automated workflow exists; final mesh-independence results are not yet documented |
-| Assignment 3 response | 🟡 | Methods infrastructure exists; required concise text, figures, measurements, and calculations remain |
+| Assignment 3 response | 🟡 | All numerical and written requirements are complete; only final annotated pre-/postoperative reconstruction figures remain |
 | Assignment 4 response | 🟡 | Steady postoperative OpenFOAM result exists; required post-processing, figures, resistance, and text remain |
 | Assignment 5 response | 🟡 | Baseline/fine OpenFOAM workflow exists; plots, quantitative comparison, discussion, and accepted artifact submission remain |
 | Assignment 6 response | ⬜ | No transient breathing-cycle simulation or required transient analyses implemented yet |
@@ -90,60 +90,63 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Describe segmentation process | 🟡 | `WORKFLOW.md`; segmentation scripts; methods text in `report/report.tex` | Produce a ≤200-word assignment-specific version |
+| Describe segmentation process | ✅ | Final assignment-specific methods draft in `ASSIGNMENT_3.md` describes both case workflows and manual preop lung removal | None |
 | Preoperative 3D reconstruction | ⬜ | Pipeline and preoperative assets exist | Generate and export a high-quality, consistently oriented figure |
 | Postoperative 3D reconstruction | 🟡 | Postoperative CFD surface and STL exist | Export a publication-quality reconstruction figure |
-| Measure preoperative constriction length | ⬜ | No final measurement recorded | Measure in Slicer and annotate the figure |
-| Measure preoperative minimum diameter | ⬜ | No final measurement recorded | Define measurement plane, measure, and annotate |
-| Measure postoperative diameter at matching location | ⬜ | No final measurement recorded | Register/identify corresponding location, measure, and annotate |
-| Calculate percentage constriction | ⬜ | Candidate formulas documented in `ASSIGNMENT.md` | Select reference and formula; insert measurements and result |
-| Explain constriction formula | ⬜ | Area- and diameter-based options identified | Write concise justification within the word limit |
+| Measure preoperative constriction length | ✅ | Accepted centerline path; `preop_stenosis_summary.json`: 12.157 mm | None |
+| Measure preoperative minimum diameter | ✅ | Accepted centerline-normal section: minimum Feret 0.798 mm, equivalent diameter 1.519 mm, area 1.813 mm² | None |
+| Measure postoperative diameter at matching location | ✅ | Matched section at 76.53% inlet-to-carina: area 5.169 mm², minimum Feret 2.292 mm, equivalent diameter 2.565 mm | None |
+| Calculate percentage constriction | ✅ | Area constriction 64.9%; minimum-Feret-diameter reduction 65.2%; recorded in `stenosis_comparison.json` | None |
+| Explain constriction formula | ✅ | `ASSIGNMENT_3.md` selects area reduction because continuity depends on area and the lumen is non-circular | None |
 | Number and caption all figures | ⬜ | LaTeX figure placeholders exist | Add final images, numbers, labels, and complete captions |
-| Respect 200-word limit | ⬜ | No final Assignment 3 response yet | Count final prose and revise |
+| Respect 200-word limit | ✅ | Final methods/measurements response is 194 words | None |
 
 ### Measurements to record
 
 | Quantity | Symbol | Value | Units | Measurement method/location |
 |---|---|---:|---|---|
-| Preoperative constriction length | `L_pre` | TBD | mm | TBD |
-| Preoperative minimum diameter | `D_pre,min` | TBD | mm | TBD |
-| Postoperative matched diameter | `D_post,matched` | TBD | mm | TBD |
-| Preoperative minimum area, if used | `A_pre,min` | TBD | mm² | TBD |
-| Postoperative matched area, if used | `A_post,matched` | TBD | mm² | TBD |
-| Degree of constriction | `C` | TBD | % | Formula TBD |
+| Preoperative constriction length | `L_pre` | 12.157 | mm | Centerline arc length between accepted stenosis endpoints |
+| Preoperative minimum Feret diameter | `D_pre,min` | 0.798 | mm | Minimum centerline-normal section |
+| Preoperative equivalent diameter | `D_pre,eq` | 1.519 | mm | `2 sqrt(A/pi)` at minimum section |
+| Postoperative minimum Feret diameter | `D_post,matched` | 2.292 | mm | Centerline-normal section at 76.53% inlet-to-carina position |
+| Postoperative equivalent diameter | `D_post,eq` | 2.565 | mm | `2 sqrt(A/pi)` at matched section |
+| Preoperative minimum area | `A_pre,min` | 1.813 | mm² | Minimum sampled centerline-normal area |
+| Postoperative matched area | `A_post,matched` | 5.169 | mm² | Same normalized anatomical position |
+| Degree of area constriction | `C_A` | 64.9 | % | `(1 - A_pre,min/A_post,matched) × 100` |
+| Minimum Feret diameter reduction | `C_D,Feret` | 65.2 | % | `(1 - D_pre,Feret/D_post,Feret) × 100` |
 
 ## 3.2 Flow behaviour — 4 points, max. 100 words
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Draw qualitative velocity behaviour | ⬜ | Governing theory included in report template | Annotate the supplied graph/sketch |
-| State physical law for velocity | 🟡 | Continuity equation documented | Include in ≤100-word answer |
-| Explain pressure before constriction | 🟡 | Viscous-loss discussion outlined | State trend, governing equation, and viscous force clearly |
-| Explain pressure through constriction | 🟡 | Bernoulli and continuity principles identified | Write concise explanation including irreversible loss |
-| Explain pressure after constriction | 🟡 | Partial pressure recovery identified | Add downstream trend to graph and answer |
-| Respect 100-word limit | ⬜ | No final response yet | Draft, count, and revise |
+| Draw qualitative velocity behaviour | ✅ | Reproducible vector figure `report/figures/assignment3_flow_behavior.pdf` | None |
+| State physical law for velocity | ✅ | Continuity equation included in final 97-word response | None |
+| Explain pressure before constriction | ✅ | Viscous pressure gradient and Hagen–Poiseuille relation included | None |
+| Explain pressure through constriction | ✅ | Bernoulli conversion and irreversible loss included | None |
+| Explain pressure after constriction | ✅ | Partial recovery and dissipation included | None |
+| Respect 100-word limit | ✅ | Final response is 97 words in `ASSIGNMENT_3.md` | None |
 
 ### Required figure annotations
 
-- [ ] Velocity trend before the constriction.
-- [ ] Velocity increase through the constriction.
-- [ ] Velocity decrease downstream.
-- [ ] Pressure decline before the constriction due to viscous resistance.
-- [ ] Additional pressure reduction through the constriction.
-- [ ] Partial pressure recovery after the constriction.
-- [ ] Clear flow direction and axial-position axis.
-- [ ] Figure number and complete caption.
+- [x] Velocity trend before the constriction.
+- [x] Velocity increase through the constriction.
+- [x] Velocity decrease downstream.
+- [x] Pressure decline before the constriction due to viscous resistance.
+- [x] Additional pressure reduction through the constriction.
+- [x] Partial pressure recovery after the constriction.
+- [x] Clear flow direction and axial-position axis.
+- [x] Figure number and complete caption.
 
 ## 3.3 Resistance — 2 points, max. 50 words
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Explain CFD-based local resistance estimate | 🟡 | `R = Δp/Q` documented in assignment and report template | Write final ≤50-word answer |
-| Define upstream pressure section | ⬜ | Not selected | Create a plane outside the acceleration region |
-| Define downstream pressure section | ⬜ | Not selected | Create a plane after the constriction; document rationale |
-| Calculate area-averaged pressures | ⬜ | CFD results can be loaded in ParaView | Integrate pressure over both planes |
-| Calculate local resistance | ⬜ | Formula available | Insert `Δp`, `Q`, resistance, and units |
-| Respect 50-word limit | ⬜ | No final response yet | Draft, count, and revise |
+| Explain CFD-based local resistance estimate | ✅ | Final 47-word method in `ASSIGNMENT_3.md` defines planes, averages, flow integration, and `R = ΔP/Q` | None for Assignment 3 |
+| Define upstream pressure section | 🟡 | Method specifies an immediate upstream centerline-normal plane | Exact plane is selected computationally in Assignment 4 |
+| Define downstream pressure section | 🟡 | Method specifies an immediate downstream centerline-normal plane | Exact plane is selected computationally in Assignment 4 |
+| Calculate area-averaged pressures | N/A | Assignment 3 asks how resistance would be estimated | Actual calculation belongs to Assignment 4 |
+| Calculate local resistance | N/A | Assignment 3 asks for the method, not a numerical result | Actual calculation belongs to Assignment 4 |
+| Respect 50-word limit | ✅ | Final response is 47 words | None |
 
 ---
 
@@ -153,34 +156,34 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Replicable table of element size, number, and type | 🟡 | Gmsh settings and `checkMesh` output exist | Consolidate exact final values and software version in a table |
-| Explain use of different near-boundary elements, max. 100 words | ⬜ | Current mesh is tetrahedral without dedicated prism layers | Explain boundary-layer purpose honestly and discuss current limitation or add layers |
+| Replicable table of element size, number, and type | ✅ | `ASSIGNMENT_4.md` records the 0.25 mm mesh: Gmsh version, hashes, 44,383 nodes, 209,652 tetrahedra, quality metrics, patches, and region count | None |
+| Explain use of different near-boundary elements, max. 100 words | ✅ | Final 82-word response in `ASSIGNMENT_4.md` explains prism-layer purpose and honestly states their absence | None |
 
 ## 4.2 Methods: simulation setup — 4 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Fluid properties, max. 100 words section | 🟡 | Kinematic viscosity is configured and documented | Verify density/pressure interpretation, cite source, and write final text |
-| Boundary conditions | 🟡 | OpenFOAM `0/U` and `0/p` are configured | Summarise and justify each patch condition |
-| Residual figure and convergence, max. 100 words | 🟡 | Solver logs have been generated | Parse residuals, plot them, and assess convergence quantitatively |
-| Effect of 1000 additional iterations, max. 50 words | ⬜ | No axial-velocity convergence comparison | Evaluate expected/observed change after convergence and draft response |
+| Fluid properties, max. 100 words section | 🟡 | Draft in `ASSIGNMENT_4.md`; `nu=1.5e-5 m²/s`, Newtonian incompressible laminar model documented | Insert selected density/citation and verify Reynolds-number justification |
+| Boundary conditions | 🟡 | Case corrected to age-appropriate 2 L/min inlet, no-slip wall, and equal zero-pressure outlets | Rerun steady simulation after inlet-flow correction |
+| Residual figure and convergence, max. 100 words | ✅ | 2 L/min run converged at iteration 589; CSV and Gnuplot/cairolatex figure generated; mass imbalance is 6.0e-7% | None |
+| Effect of 1000 additional iterations, max. 50 words | 🟡 | A 45-word hypothesis is drafted in `ASSIGNMENT_4.md` | Continue solution to iteration 3000 and quantify axial-velocity change |
 
 ## 4.3 Results — 3 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Visualise flow | 🟡 | Reconstructed fields fetched for ParaView | Create final velocity figure with defined plane/scale |
-| Visualise pressure | 🟡 | Reconstructed pressure field available | Create final pressure figure and state kinematic/dimensional units |
-| Calculate left/right lung flow distribution | ⬜ | Three outlet patches available | Integrate outlet fluxes and combine anatomically by lung |
-| Explain equal/unequal distribution | ⬜ | No quantitative split recorded | Relate result to geometry and outlet assumptions |
-| Define pre-bifurcation resistance section | ⬜ | Assignment specifies approximate pre-op constriction location | Create and save fixed upstream/downstream planes for reuse in Assignment 6 |
-| Calculate and visualise local resistance, max. 100 words | ⬜ | Formula documented; fields available | Integrate section pressures/flow, calculate resistance, and annotate location |
+| Visualise flow | ✅ | Reproducible full-lumen velocity-vector render at iteration 589 with fixed 0–10 m/s scale | None |
+| Visualise pressure | ✅ | Reproducible frontal dimensional-pressure map and Gnuplot/cairolatex centerline pressure profile generated in Pa | None |
+| Calculate left/right lung flow distribution | ✅ | Right 73.17%, left 26.83%; exact patch flows and mass balance saved in `postop_assignment4_flow_distribution.json` | None |
+| Explain equal/unequal distribution | ✅ | Final response attributes split under equal outlet pressure to resolved branch geometry and resistance | None |
+| Define pre-bifurcation resistance section | ✅ | Superior, matched, and inferior centerline-normal planes frozen in `resistance_sections.json` | Add plane visualization later |
+| Calculate and visualise local resistance, max. 100 words | 🟡 | ΔP 30.95 Pa; resistance 9.25e5 Pa·s/m³; fixed-plane metrics saved reproducibly | Add resistance-plane figure |
 
 ## 4.4 Future work — 1 point, max. 100 words
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Select mesh-sensitivity parameters | 🟡 | Candidate quantities identified in report template | Finalise parameters based on Assignment 4 outputs and justify them |
+| Select mesh-sensitivity parameters | ✅ | `ASSIGNMENT_4.md` selects outlet fractions, local pressure drop/resistance, mean axial velocity, and peak velocity with justification | None |
 
 ---
 
@@ -196,9 +199,9 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Run multiple postoperative mesh resolutions | 🟡 | Baseline and automated fine-mesh workflows exist | Confirm successful final runs and add enough resolutions for a defensible trend |
+| Run multiple postoperative mesh resolutions | 🟡 | End-to-end HXT workflow implemented for 0.25, 0.20, 0.15, and 0.12 mm; rejected Delaunay 0.20 mm exposed non-convergence/slivers | Run the four quality-consistent HXT cases |
 | Record number of elements for every mesh | ⬜ | Counts may exist in logs | Extract and tabulate final counts |
-| Select parameters of interest | ⬜ | Candidate quantities are mentioned in report template | Select final quantities, e.g. pressure drop, peak velocity, resistance, and outlet flow split |
+| Select parameters of interest | ✅ | Fixed metrics: local resistance, right-lung fraction, right-superior share of right flow, and matched-section peak velocity | None |
 | Plot each parameter against element count | ⬜ | No plots documented | Generate one X–Y plot per parameter |
 | Calculate differences relative to densest mesh | ⬜ | Formula documented in `ASSIGNMENT.md` | Calculate values for every non-reference mesh |
 | Plot percentage differences | ⬜ | No plots documented | Generate and label percentage-difference plots |

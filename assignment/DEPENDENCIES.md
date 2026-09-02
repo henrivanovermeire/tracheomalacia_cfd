@@ -132,9 +132,9 @@ work.
 
 3. **Boundary identities**
    - `inlet`.
-   - `outlet_1`: upper-right branch.
-   - `outlet_2`: lower-right branch.
-   - `outlet_3`: left branch.
+   - `outlet_1`: right superior lobar bronchus.
+   - `outlet_2`: right inferior lobar bronchus.
+   - `outlet_3`: left main bronchus.
    - `wall`.
 
 4. **Resistance definition**

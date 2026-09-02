@@ -325,9 +325,10 @@ circular diameter is calculated from section area $A$ as
   D_{\mathrm{eq}} = 2\sqrt{\frac{A}{\pi}}.
 \end{equation}
 
-The postoperative area and equivalent diameter are measured at the matching
-anatomical location using the same procedure. The primary area-based degree of
-constriction is
+The postoperative area and equivalent diameter are measured using the same
+procedure at 76.53\% of the inlet-to-carina centerline length. The carina is
+defined from the airway-network bifurcation nearest the airway seed. The primary
+area-based degree of constriction is
 
 \begin{equation}
   C_A = \left(1-\frac{A_{\mathrm{pre,min}}}
@@ -335,7 +336,8 @@ constriction is
   \label{eq:area_constriction}
 \end{equation}
 
-For transparency, the diameter reduction is also reported as
+The measured area constriction is 64.9\%. For transparency, the corresponding
+minimum-Feret-diameter reduction is 65.2\% and is reported as
 
 \begin{equation}
   C_D = \left(1-\frac{D_{\mathrm{pre,min}}}
@@ -352,12 +354,15 @@ For transparency, the diameter reduction is also reported as
     \toprule
     Quantity & Symbol & Value \\
     \midrule
-    Preoperative constriction length & $L_{\mathrm{pre}}$ & [insert] \si{\milli\metre} \\
-    Preoperative minimum area & $A_{\mathrm{pre,min}}$ & [insert] \si{\milli\metre\squared} \\
-    Preoperative equivalent diameter & $D_{\mathrm{pre,min}}$ & [insert] \si{\milli\metre} \\
-    Postoperative matched area & $A_{\mathrm{post,matched}}$ & [insert] \si{\milli\metre\squared} \\
-    Postoperative matched diameter & $D_{\mathrm{post,matched}}$ & [insert] \si{\milli\metre} \\
-    Area constriction & $C_A$ & [insert] \% \\
+    Preoperative constriction length & $L_{\mathrm{pre}}$ & 12.157 \si{\milli\metre} \\
+    Preoperative minimum area & $A_{\mathrm{pre,min}}$ & 1.813 \si{\milli\metre\squared} \\
+    Preoperative minimum Feret diameter & $D_{\mathrm{pre,Feret}}$ & 0.798 \si{\milli\metre} \\
+    Preoperative equivalent diameter & $D_{\mathrm{pre,eq}}$ & 1.519 \si{\milli\metre} \\
+    Postoperative matched area & $A_{\mathrm{post,matched}}$ & 5.169 \si{\milli\metre\squared} \\
+    Postoperative minimum Feret diameter & $D_{\mathrm{post,Feret}}$ & 2.292 \si{\milli\metre} \\
+    Postoperative equivalent diameter & $D_{\mathrm{post,eq}}$ & 2.565 \si{\milli\metre} \\
+    Area constriction & $C_A$ & 64.9\% \\
+    Minimum Feret diameter reduction & $C_{D,\mathrm{Feret}}$ & 65.2\% \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -373,6 +378,27 @@ For transparency, the diameter reduction is also reported as
   \label{fig:anatomical_measurements}
 \end{figure}
 
+\subsection{Qualitative flow behaviour through the constriction}
+
+For incompressible flow, continuity $Q=AU$ requires velocity to rise as the area
+narrows and fall after expansion. Before the stenosis, pressure decreases
+gradually because viscous wall shear opposes motion; for laminar circular flow,
+$\Delta p=128\mu LQ/(\pi D^4)$. Through the stenosis, acceleration converts
+static pressure into kinetic energy according to Bernoulli's principle, while
+viscosity and separation add irreversible loss. Downstream, deceleration causes
+partial pressure recovery, but pressure remains below the upstream trend because
+separation, mixing, and wall friction dissipate mechanical energy.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.88\textwidth]{assignment3_flow_behavior.pdf}
+  \caption{Qualitative velocity and static-pressure evolution through a
+  constriction. Velocity increases as area decreases; pressure falls sharply
+  through the stenosis and recovers only partially downstream. Curves are
+  schematic and not CFD results.}
+  \label{fig:assignment3_flow_behavior}
+\end{figure}
+
 % -----------------------------------------------------------------------------
 \section{Volume mesh generation}
 \label{sec:mesh}
@@ -383,9 +409,9 @@ are:
 
 \begin{itemize}
   \item \texttt{inlet}: tracheal inlet;
-  \item \texttt{outlet\_1}: upper-right outlet;
-  \item \texttt{outlet\_2}: lower-right outlet;
-  \item \texttt{outlet\_3}: left outlet;
+  \item \texttt{outlet\_1}: right superior lobar bronchus;
+  \item \texttt{outlet\_2}: right inferior lobar bronchus;
+  \item \texttt{outlet\_3}: left main bronchus;
   \item \texttt{wall}: remaining airway surface; and
   \item \texttt{fluid}: internal volume.
 \end{itemize}
@@ -473,10 +499,11 @@ laminar, transitional, or turbulent model is justified.]
 A prescribed volumetric flow rate is applied at the tracheal inlet:
 
 \begin{equation}
-  Q_{\mathrm{in}} = \SI{1.6667e-4}{\metre\cubed\per\second}.
+  Q_{\mathrm{in}} = \SI{3.3333e-5}{\metre\cubed\per\second}.
 \end{equation}
 
-This corresponds to approximately \SI{10}{\litre\per\minute}. A no-slip
+This corresponds to approximately \SI{2}{\litre\per\minute}, representative
+of the stated minute volume for a 10-month-old infant. A no-slip
 condition is applied at the airway wall. The three outlets use zero reference
 pressure with pressure-compatible velocity conditions. Table~\ref{tab:bc}
 summarises the implementation.
@@ -580,8 +607,12 @@ Particular attention should be paid to:
 
 \subsection{Convergence and mass conservation}
 
-Plot the pressure and velocity residual histories. Verify that the final outlet
-flow rates satisfy:
+The SIMPLE solution met residual control after 589 iterations. Final initial
+residuals were $9.93\times10^{-7}$, $7.57\times10^{-7}$, and
+$6.48\times10^{-7}$ for $U_x$, $U_y$, and $U_z$, respectively, and
+$4.92\times10^{-6}$ for pressure. These are below the configured criteria of
+$10^{-6}$ for velocity and $10^{-5}$ for pressure. Final outlet-flow integration
+is still used to verify that
 
 \begin{equation}
   Q_{\mathrm{in}} + \sum_{i=1}^{3} Q_{\mathrm{out},i} \approx 0,
@@ -592,12 +623,11 @@ imbalance.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: steady postoperative residual histories for $U_x$, $U_y$,
-    $U_z$, and $p$ on a logarithmic scale}}
-  \caption{Residual evolution for the steady postoperative simulation. Mark the
-  configured residual criteria and state whether monitored integral quantities
-  were also stable.}
+  \resizebox{0.95\textwidth}{!}{\input{figures/assignment4_residuals.tex}}
+  \caption{Initial residual evolution for the postoperative steady simulation.
+  Dashed and dotted lines indicate the configured velocity and pressure
+  convergence criteria. The SIMPLE algorithm stopped at iteration 589 after all
+  criteria were satisfied.}
   \label{fig:steady_residuals}
 \end{figure}
 
@@ -668,39 +698,60 @@ $d$, the Assignment 5 percentage difference is defined as
 
 \subsection{Velocity field}
 
-[Describe and compare the velocity magnitude, jet formation through stenotic
-regions, secondary flow, separation, and recirculation. Use identical colour
-scales for preoperative and postoperative figures.]
+At the converged postoperative solution, velocity vectors accelerate through the
+narrow distal trachea and divide at the carina. The fixed matched section has an
+area-averaged axial velocity of \SI{6.53}{\metre\per\second} and a sectional
+peak magnitude of \SI{9.25}{\metre\per\second}. The vectors also show the
+unequal right/left flow division quantified from patch fluxes.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][6cm][c]{0.88\textwidth}{\centering
-    Placeholder: preoperative and postoperative velocity magnitude}}
-  \caption{Velocity magnitude for the preoperative and postoperative cases.
-  State the displayed time/iteration and use a shared colour range.}
+  \includegraphics[width=0.92\textwidth]{assignment4_velocity_vectors.png}
+  \caption{Postoperative velocity-vector field at the converged steady solution
+  (iteration 589). Arrow direction represents local flow direction; arrow colour
+  represents velocity magnitude on a fixed \SIrange{0}{10}{\metre\per\second}
+  scale. The airway surface is shown semi-transparently for anatomical context.}
   \label{fig:velocity}
 \end{figure}
 
 \subsection{Pressure distribution}
 
-[Report pressure relative to the outlet reference and quantify pressure losses
-across anatomically relevant sections.]
+Pressure is reported relative to the zero-gauge-pressure outlets and converted
+from OpenFOAM kinematic pressure using $P=\rho p$ with
+$\rho=\SI{1.204}{\kilogram\per\metre\cubed}$. Pressure decreases from the
+tracheal inlet toward the outlets. Along the mapped centerline interval it falls
+from approximately \SI{65.1}{\pascal} to \SI{34.1}{\pascal}, with a local
+minimum followed by partial recovery. The resistance calculation uses
+area-averaged plane pressures rather than centerline point samples.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][6cm][c]{0.88\textwidth}{\centering
-    Placeholder: pressure distribution and centerline pressure plot}}
-  \caption{Static or kinematic pressure distribution. Clearly state whether
-  pressure has been converted to pascals.}
+  \includegraphics[width=0.92\textwidth]{assignment4_pressure_distribution.png}
+  \caption{Postoperative dimensional gauge-pressure distribution at the
+  converged steady solution (iteration 589), shown in anatomical frontal view.
+  OpenFOAM kinematic pressure was multiplied by an air density of
+  \SI{1.204}{\kilogram\per\metre\cubed}; outlet gauge pressure is zero.}
   \label{fig:pressure}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.95\textwidth}{!}{\input{figures/assignment4_centerline_pressure.tex}}
+  \caption{Centerline-interpolated dimensional pressure across the postoperative
+  region corresponding to the preoperative stenosis. Distance is measured from
+  the mapped superior limit toward the mapped inferior limit. This profile shows
+  local pressure evolution; resistance is calculated separately from
+  area-averaged pressures on the bounding planes.}
+  \label{fig:centerline_pressure}
 \end{figure}
 
 \subsection{Outlet and lung flow distribution}
 
-Outlet flow is obtained by integrating the normal volumetric flux over each
-outlet patch. The anatomically corresponding outlets are then grouped into left
-and right lungs. Report the grouping explicitly and use one outward-normal sign
-convention throughout.
+Outlet flow was obtained by integrating outward-normal volumetric flux over each
+patch. The right superior and inferior lobar outlets were grouped as the right
+lung; the left main bronchus formed the left group. With identical zero gauge
+pressure at all outlets, the resulting unequal split reflects the resolved
+geometric and hydraulic resistance of the branches.
 
 \begin{table}[htbp]
   \centering
@@ -708,10 +759,9 @@ convention throughout.
   \label{tab:outlet_flow}
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Case & Outlet 1 & Outlet 2 & Outlet 3 & Mass imbalance \\
+    Case & Outlet 1 (\%) & Outlet 2 (\%) & Outlet 3 (\%) & Imbalance (\%) \\
     \midrule
-    Preoperative  & [insert] & [insert] & [insert] & [insert] \\
-    Postoperative & [insert] & [insert] & [insert] & [insert] \\
+    Postoperative & 11.23 & 61.94 & 26.83 & $6.0\times10^{-7}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -724,8 +774,8 @@ convention throughout.
     \toprule
     Lung & Flow rate (\si{\metre\cubed\per\second}) & Fraction (\%) \\
     \midrule
-    Left  & [insert] & [insert] \\
-    Right & [insert] & [insert] \\
+    Left  & $8.9449\times10^{-6}$ & 26.83 \\
+    Right & $2.4388\times10^{-5}$ & 73.17 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -746,7 +796,15 @@ $\Delta P$ and volumetric flow $Q$, local resistance is
 \end{equation}
 
 For the incompressible OpenFOAM pressure field $p$,
-$\Delta P=\rho\,\Delta p$. Area-averaged pressure is used at each plane.
+$\Delta P=\rho\,\Delta p$. Area-averaged kinematic pressures were
+\SI{53.70}{\metre\squared\per\second\squared} upstream and
+\SI{27.99}{\metre\squared\per\second\squared} downstream. With
+$\rho=\SI{1.204}{\kilogram\per\metre\cubed}$, the local pressure drop was
+\SI{30.95}{\pascal}; at $Q=\SI{3.347e-5}{\metre\cubed\per\second}$ this gives
+$R=\SI{9.25e5}{\pascal\second\per\metre\cubed}$, equivalent to
+\SI{15.41}{\pascal\per\litre\per\minute}. The matched-plane mean axial and peak
+velocities were \SI{6.53}{\metre\per\second} and
+\SI{9.25}{\metre\per\second}, respectively.
 
 \begin{figure}[htbp]
   \centering

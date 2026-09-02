@@ -9,31 +9,70 @@ import ExtractCenterline
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-# Which patient case to process. Keep this in sync with segment_airway.py.
-CASE = "postop"
+segmentation_node = slicer.mrmlScene.GetFirstNodeByName(
+    "AirwayLungSegmentation"
+)
+if segmentation_node is None:
+    raise RuntimeError(
+        "AirwayLungSegmentation node was not found. Run segment_airway.py first."
+    )
+
+CASE = segmentation_node.GetAttribute("AirwayCase")
+if CASE not in {"preop", "postop"}:
+    # Backward compatibility for scenes loaded before AirwayCase tagging was
+    # introduced. A loaded case-specific .seg.nrrd retains its storage path.
+    storage_node = segmentation_node.GetStorageNode()
+    storage_path = ""
+    if storage_node is not None and storage_node.GetFileName():
+        storage_path = pathlib.Path(storage_node.GetFileName()).as_posix().lower()
+
+    for candidate_case in ("preop", "postop"):
+        if f"/{candidate_case}/" in storage_path:
+            CASE = candidate_case
+            segmentation_node.SetAttribute("AirwayCase", CASE)
+            break
+
+if CASE not in {"preop", "postop"}:
+    raise RuntimeError(
+        "The live AirwayLungSegmentation node has no valid AirwayCase tag and "
+        "its case could not be inferred from the storage path. Re-run "
+        "segment_airway.py or remove_lungs.py."
+    )
+
+print("Using scene case:", CASE)
 
 endpoints_path = (
     project_path / "segmentation" / "assets" / CASE / "CenterlineEndpoints.json"
 )
+existing_endpoints_markup = slicer.mrmlScene.GetFirstNodeByName(
+    "CenterlineEndpoints"
+)
 
-if not endpoints_path.is_file():
-    raise FileNotFoundError(
-        f"Centerline endpoint markup not found: {endpoints_path}\n"
-        "Run prepare_centerline_endpoints.py in Slicer, place the four "
-        "case-specific points, and export the node to this path first."
+if endpoints_path.is_file():
+    with open(endpoints_path, "r") as endpoints_file:
+        endpoints_data = json.load(endpoints_file)
+
+    endpoints_markup_data = endpoints_data["markups"][0]
+    endpoints_coordinate_system = endpoints_markup_data.get(
+        "coordinateSystem", "LPS"
     )
+    endpoints_control_points = endpoints_markup_data["controlPoints"]
 
-with open(endpoints_path, "r") as endpoints_file:
-    endpoints_data = json.load(endpoints_file)
-
-endpoints_markup_data = endpoints_data["markups"][0]
-endpoints_coordinate_system = endpoints_markup_data.get("coordinateSystem", "LPS")
-endpoints_control_points = endpoints_markup_data["controlPoints"]
-
-if not endpoints_control_points:
-    raise RuntimeError(
-        f"No control points found in {endpoints_path}."
-    )
+    if not endpoints_control_points:
+        raise RuntimeError(f"No control points found in {endpoints_path}.")
+else:
+    endpoints_coordinate_system = None
+    endpoints_control_points = None
+    if (
+        existing_endpoints_markup is None
+        or existing_endpoints_markup.GetNumberOfControlPoints() < 2
+    ):
+        raise FileNotFoundError(
+            f"Centerline endpoint markup not found: {endpoints_path}\n"
+            "No usable CenterlineEndpoints node is present in the scene either. "
+            "Run prepare_centerline_endpoints.py and place the case-specific "
+            "points first."
+        )
 
 
 # ============================================================
@@ -76,37 +115,41 @@ print("======================================")
 print("Loading centerline endpoints")
 print("======================================")
 
-remove_node_if_present("CenterlineEndpoints")
+if endpoints_control_points is not None:
+    remove_node_if_present("CenterlineEndpoints")
 
-centerline_endpoints_markup = slicer.mrmlScene.AddNewNodeByClass(
-    "vtkMRMLMarkupsFiducialNode",
-    "CenterlineEndpoints"
-)
-
-for control_point in endpoints_control_points:
-    point_ras = control_point_to_RAS(control_point)
-    point_label = control_point.get("label", "CenterlineEndpoint")
-    point_selected = control_point.get("selected", True)
-
-    point_index = centerline_endpoints_markup.AddControlPoint(
-        point_ras[0],
-        point_ras[1],
-        point_ras[2]
+    centerline_endpoints_markup = slicer.mrmlScene.AddNewNodeByClass(
+        "vtkMRMLMarkupsFiducialNode",
+        "CenterlineEndpoints"
     )
 
-    centerline_endpoints_markup.SetNthControlPointLabel(
-        point_index,
-        point_label
-    )
+    for control_point in endpoints_control_points:
+        point_ras = control_point_to_RAS(control_point)
+        point_label = control_point.get("label", "CenterlineEndpoint")
+        point_selected = control_point.get("selected", True)
 
-    centerline_endpoints_markup.SetNthControlPointSelected(
-        point_index,
-        point_selected
-    )
+        point_index = centerline_endpoints_markup.AddControlPoint(
+            point_ras[0],
+            point_ras[1],
+            point_ras[2]
+        )
+
+        centerline_endpoints_markup.SetNthControlPointLabel(
+            point_index,
+            point_label
+        )
+
+        centerline_endpoints_markup.SetNthControlPointSelected(
+            point_index,
+            point_selected
+        )
+
+    print("Loaded CenterlineEndpoints from:", endpoints_path)
+else:
+    centerline_endpoints_markup = existing_endpoints_markup
+    print("Using existing CenterlineEndpoints from the live scene.")
 
 centerline_endpoints_markup.SetDisplayVisibility(True)
-
-print("Loaded CenterlineEndpoints from:", endpoints_path)
 print(
     "CenterlineEndpoints control points:",
     centerline_endpoints_markup.GetNumberOfControlPoints()
@@ -121,20 +164,6 @@ print("")
 print("======================================")
 print("Getting Airways surface")
 print("======================================")
-
-segmentation_node = slicer.util.getNode("AirwayLungSegmentation")
-
-if segmentation_node is None:
-    raise RuntimeError(
-        "AirwayLungSegmentation node was not found. Run segment_airway.py first."
-    )
-
-scene_case = segmentation_node.GetAttribute("AirwayCase")
-if scene_case is not None and scene_case != CASE:
-    raise RuntimeError(
-        f"CASE mismatch: calculate_centerline.py is set to '{CASE}', but the "
-        f"live segmentation is tagged '{scene_case}'."
-    )
 
 segmentation = segmentation_node.GetSegmentation()
 airways_segment_id = segmentation.GetSegmentIdBySegmentName("Airways")
@@ -233,6 +262,10 @@ network_model_node.GetDisplayNode().SetColor(0.0, 0.0, 1.0)
 network_model_node.GetDisplayNode().SetLineWidth(3)
 
 network_model_node.SetDisplayVisibility(True)
+# Centerline extraction endpoints and refined cutting endpoints are separate
+# markup nodes. Hide the former after extraction to avoid an apparent duplicate
+# when load_cutting_points.py is run next.
+centerline_endpoints_markup.SetDisplayVisibility(False)
 
 segmentation_display_node = segmentation_node.GetDisplayNode()
 if segmentation_display_node is not None:

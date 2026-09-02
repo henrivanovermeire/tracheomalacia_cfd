@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "preop_summary": "preop_stenosis_summary.json",
+  "postop_summary": "postop_stenosis_summary.json",
+  "matching_method": "Normalized centerline distance from tracheal inlet to carina",
+  "relative_distance_from_inlet": 0.7653256759696391,
+  "measurements": {
+    "preop_centerline_length_mm": 12.157226830116713,
+    "preop_area_mm2": 1.8129506993099282,
+    "postop_matched_area_mm2": 5.1687924468410245,
+    "preop_minimum_feret_diameter_mm": 0.7980177253533174,
+    "postop_minimum_feret_diameter_mm": 2.2917055704161893,
+    "preop_equivalent_diameter_mm": 1.519315807532018,
+    "postop_equivalent_diameter_mm": 2.565367603647948
+  },
+  "derived": {
+    "area_constriction_percent": 64.92506290481954,
+    "minimum_feret_diameter_reduction_percent": 65.1779994928235,
+    "equivalent_diameter_reduction_percent": 40.775902628085205
+  },
+  "primary_result": "area_constriction_percent"
+}

@@ -37,8 +37,21 @@ except ImportError:
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-# Which patient case to process. Keep this in sync with segment_airway.py.
-CASE = "postop"
+scene_segmentation_node = slicer.mrmlScene.GetFirstNodeByName(
+    "AirwayLungSegmentation"
+)
+if scene_segmentation_node is None:
+    raise RuntimeError(
+        "AirwayLungSegmentation node was not found. Run segment_airway.py first."
+    )
+
+CASE = scene_segmentation_node.GetAttribute("AirwayCase")
+if CASE not in {"preop", "postop"}:
+    raise RuntimeError(
+        "The live AirwayLungSegmentation node has no valid AirwayCase tag."
+    )
+
+print("Using scene case:", CASE)
 
 CUT_ENDPOINTS_NODE_NAME = "AirwayCutEndpoints"
 
@@ -202,14 +215,7 @@ def ensure_cut_endpoints_node():
 
 def get_airway_surface_polydata():
 
-    segmentation_node = slicer.util.getNode("AirwayLungSegmentation")
-    scene_case = segmentation_node.GetAttribute("AirwayCase")
-    if scene_case is not None and scene_case != CASE:
-        raise RuntimeError(
-            f"CASE mismatch: cut_airways_centerline.py is set to '{CASE}', "
-            f"but the live segmentation is tagged '{scene_case}'."
-        )
-
+    segmentation_node = scene_segmentation_node
     segmentation = segmentation_node.GetSegmentation()
     airways_segment_id = segmentation.GetSegmentIdBySegmentName("Airways")
 
@@ -544,6 +550,7 @@ boundary_info = assign_boundary_names(
     extended_boundaries_poly_data,
     cut_endpoints_node
 )
+
 
 for info in boundary_info:
     print(

@@ -1,0 +1,11 @@
+quantity,symbol,value,unit,method
+Preoperative constriction length,L_pre,12.157226830116713,mm,Centerline arc length between stenosis endpoints
+Preoperative minimum area,A_pre_min,1.8129506993099282,mm2,Minimum sampled centerline-normal lumen contour
+Preoperative minimum Feret diameter,D_pre_Feret,0.7980177253533174,mm,Minimum Feret diameter at preoperative minimum-area section
+Preoperative equivalent diameter,D_pre_eq,1.519315807532018,mm,2*sqrt(A/pi) at preoperative minimum-area section
+Postoperative matched area,A_post_matched,5.1687924468410245,mm2,Centerline-normal contour at matched normalized anatomical position
+Postoperative minimum Feret diameter,D_post_Feret,2.2917055704161893,mm,Minimum Feret diameter at matched postoperative section
+Postoperative equivalent diameter,D_post_eq,2.565367603647948,mm,2*sqrt(A/pi) at matched postoperative section
+Area constriction,C_A,64.92506290481954,percent,(1-A_pre_min/A_post_matched)*100
+Minimum Feret diameter reduction,C_D_Feret,65.1779994928235,percent,(1-D_pre_Feret/D_post_Feret)*100
+Equivalent diameter reduction,C_D_eq,40.775902628085205,percent,(1-D_pre_eq/D_post_eq)*100

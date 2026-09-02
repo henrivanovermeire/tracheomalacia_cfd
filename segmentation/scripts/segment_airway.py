@@ -9,13 +9,10 @@ import pathlib
 
 project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 
-# Which patient case to process. Switch this to "preop" to run the exact
-# same flow on the pre-operative DICOM data instead. Every other
-# case-specific script (calculate_centerline.py, load_cutting_points.py,
-# cut_airways_centerline.py) exposes the same CASE variable and should be
-# kept in sync with this one.
+# The only user-selected case switch in the Slicer pipeline. This script tags
+# AirwayLungSegmentation with AirwayCase; all downstream scripts read that tag.
 
-CASE = "preop"
+CASE = "postop"
 
 source_folder = project_path / "segmentation" / "source" / f"DICOM_{CASE}"
 

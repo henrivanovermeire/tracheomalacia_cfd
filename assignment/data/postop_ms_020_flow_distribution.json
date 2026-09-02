@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "case": "postop_ms_020",
+  "time": 2000.0,
+  "sign_convention": "outward patch-normal flux",
+  "inlet": {
+    "flow_rate_m3_s": -3.3333e-05
+  },
+  "outlets": {
+    "outlet_1": {
+      "anatomy": "right superior lobar bronchus",
+      "surface_id": 23,
+      "flow_rate_m3_s": 3.7688709e-06,
+      "fraction_percent": 11.30672576725767
+    },
+    "outlet_2": {
+      "anatomy": "right inferior lobar bronchus",
+      "surface_id": 24,
+      "flow_rate_m3_s": 2.0740197e-05,
+      "fraction_percent": 62.22121321213212
+    },
+    "outlet_3": {
+      "anatomy": "left main bronchus",
+      "surface_id": 22,
+      "flow_rate_m3_s": 8.8238482e-06,
+      "fraction_percent": 26.47180931809318
+    }
+  },
+  "lungs": {
+    "right": {
+      "patches": [
+        "outlet_1",
+        "outlet_2"
+      ],
+      "flow_rate_m3_s": 2.45090679e-05,
+      "fraction_percent": 73.52793897938979
+    },
+    "left": {
+      "patches": [
+        "outlet_3"
+      ],
+      "flow_rate_m3_s": 8.8238482e-06,
+      "fraction_percent": 26.47180931809318
+    }
+  },
+  "right_superior_share_percent": 15.377455052054426,
+  "total_outlet_flow_rate_m3_s": 3.33329161e-05,
+  "absolute_mass_imbalance_m3_s": 8.389999999814431e-11,
+  "relative_mass_imbalance_percent": 0.00025170251701960315
+}

@@ -109,7 +109,8 @@ required by Assignment 3.
 
 ## 3.2 Complete the preoperative geometry
 
-Run the Slicer scripts with `CASE = "preop"`:
+Set `CASE = "preop"` only in `segment_airway.py`; all later scripts read the
+`AirwayCase` scene tag. Then run:
 
 1. `segment_airway.py`
 2. `remove_lungs.py` to substitute the manually cleaned preoperative
@@ -147,47 +148,60 @@ Case-specific export organisation is now implemented:
 
 ## 3.4 Measure the preoperative constriction
 
-- [ ] Mark proximal and distal constriction limits on the centerline.
-- [ ] Measure constriction length along the centerline.
-- [ ] Sample cross-sections perpendicular to the centerline through the stenosis.
-- [ ] Identify the minimum cross-sectional area.
+- [x] Marked proximal and distal limits in
+      `segmentation/assets/preop/StenosisEndpoints.json`.
+- [x] Ran `segmentation/scripts/measure_stenosis.py` in the preoperative Slicer
+      scene.
+- [x] Inspected and accepted the generated centerline segment and minimum
+      cross-section.
+- [x] Accepted the stenosis endpoints after visual review.
+- [x] Recorded centerline length (12.157 mm) and minimum cross-sectional area
+      (1.813 mm²).
 - [ ] Calculate equivalent diameter:
 
 ```text
 D_eq = 2 sqrt(A / π)
 ```
 
-- [ ] Save section position, orientation, area, equivalent diameter, and—if
-      useful—minimum/maximum Feret diameters.
+- [x] Saved section position, orientation, area, equivalent diameter (1.519 mm),
+      and minimum/maximum Feret diameters (0.798/2.859 mm).
 
 ## 3.5 Measure the matched postoperative section
 
-- [ ] Identify the same anatomical location using bifurcation-relative landmarks.
-- [ ] Use the same centerline-normal cross-section method.
-- [ ] Record matched postoperative area and equivalent diameter.
-- [ ] Document how correspondence was established.
+- [x] Identified the corresponding location at 76.53% of inlet-to-carina
+      centerline length; postoperative carina is the network bifurcation nearest
+      `AirwaySeed`.
+- [x] Generalized `measure_stenosis.py` to use the same centerline-normal method
+      in both scene cases and to distinguish the matched section from the local
+      interval minimum.
+- [x] Ran `measure_stenosis.py` in the postoperative scene and recorded matched
+      area (5.169 mm²), minimum Feret diameter (2.292 mm), and equivalent
+      diameter (2.565 mm).
+- [x] Documented the normalized centerline correspondence and mapped both
+      stenosis endpoints for visual verification.
 
 ## 3.6 Calculate constriction
 
-Calculate and retain both:
+Calculated and retained both:
 
 ```text
 Area constriction = (1 - A_pre,min / A_post,matched) × 100%
 Diameter reduction = (1 - D_pre,min / D_post,matched) × 100%
 ```
 
-Use area constriction as the primary result unless a course clarification says
-otherwise.
+The resulting area constriction is 64.9%; minimum-Feret-diameter reduction is
+65.2%. Area constriction is the primary result because it directly represents
+loss of flow area in the non-circular lumen.
 
 ## Required outputs
 
-- [ ] `assignment/data/anatomical_measurements.csv`
+- [x] `assignment/data/anatomical_measurements.csv`
 - [ ] Preoperative annotated reconstruction.
 - [ ] Postoperative annotated reconstruction.
 - [ ] Clear figure captions and measurement methodology.
-- [ ] Final Methods/Measurements response ≤200 words.
-- [ ] Qualitative pressure/velocity graph for the separate flow-behaviour task.
-- [ ] Resistance-method answer ≤50 words.
+- [x] Final Methods/Measurements response is 194 words.
+- [x] Qualitative pressure/velocity graph for the separate flow-behaviour task.
+- [x] Resistance-method answer ≤50 words.
 
 ## Definition of done
 
@@ -217,15 +231,15 @@ that must remain unchanged for Assignments 5 and 6.
 
 Record:
 
-- [ ] STL identity/checksum.
-- [ ] Gmsh characteristic length.
-- [ ] Classification angle and meshing algorithm.
-- [ ] Node and cell counts.
-- [ ] Element order and type.
+- [x] STL identity/checksum.
+- [x] Gmsh characteristic length (0.5 mm).
+- [x] Classification angle (40°) and 3D algorithm (Gmsh Delaunay).
+- [x] Node and cell counts for the committed mesh (8,424 nodes; 32,298 cells).
+- [x] Element order and type (first-order tetrahedra).
 - [ ] Maximum aspect ratio.
 - [ ] Maximum non-orthogonality and number above 70°.
 - [ ] Maximum skewness and minimum volume.
-- [ ] Statement that the current mesh has tetrahedra but no dedicated prism
+- [x] Statement that the current mesh has tetrahedra but no dedicated prism
       boundary layer.
 
 ## 4.3 Residual and convergence analysis
@@ -254,14 +268,14 @@ These definitions are frozen for Assignments 4, 5, and 6.
 
 Automate extraction to CSV for:
 
-- [ ] Area-averaged kinematic pressure on both resistance planes.
-- [ ] Dimensional pressure difference using a documented air density.
-- [ ] Volumetric flow through the section.
-- [ ] Local resistance `R = ΔP / Q`.
-- [ ] Area-averaged axial velocity on the selected section.
-- [ ] Flow rate through each outlet.
-- [ ] Combined left- and right-lung flow fractions.
-- [ ] Peak velocity in a defined region, if selected for mesh sensitivity.
+- [x] Area-averaged kinematic pressure on both resistance planes.
+- [x] Dimensional pressure difference using air density 1.204 kg/m³.
+- [x] Volumetric flow through the section.
+- [x] Local resistance `R = ΔP / Q`.
+- [x] Area-averaged axial velocity on the selected section.
+- [x] Flow rate through each outlet.
+- [x] Combined left- and right-lung flow fractions.
+- [x] Peak velocity on the fixed matched section, selected for mesh sensitivity.
 
 Prefer an OpenFOAM function object or scripted ParaView/Python workflow over
 manual GUI readings.
@@ -276,9 +290,9 @@ manual GUI readings.
 
 ## 4.7 Produce final steady figures
 
-- [ ] Velocity field on a defined plane or centre surface.
-- [ ] Pressure field with clear kinematic or dimensional units.
-- [ ] Residual history.
+- [x] Full-lumen velocity-vector field with fixed scale and anatomical frontal view.
+- [x] Dimensional pressure field and centerline pressure profile in Pa.
+- [x] Residual history.
 - [ ] Resistance-plane locations.
 - [ ] Outlet/lung flow distribution table or chart.
 
@@ -303,9 +317,10 @@ Use at least three systematically refined meshes. Initial proposal:
 
 | Label | Target size | Purpose |
 |---|---:|---|
-| Coarse | 0.35 mm | Establish low-resolution trend |
-| Baseline | 0.25 mm | Existing comparison point |
-| Fine | 0.15 mm | Dense reference |
+| HXT baseline | 0.25 mm | Quality-consistent replacement for the Assignment 4 Delaunay mesh |
+| HXT fine 1 | 0.20 mm | First refinement |
+| HXT fine 2 | 0.15 mm | Second refinement |
+| HXT reference | 0.12 mm | Densest reference |
 
 Adjust sizes if cell counts or memory use become impractical, but preserve a
 clear refinement sequence.
@@ -346,14 +361,14 @@ postop_fine
 Use the frozen Assignment 4 sections and scripts. Recommended primary
 parameters:
 
-- [ ] Pre-bifurcation local resistance.
-- [ ] Left/right lung flow split.
-- [ ] Area-averaged axial velocity at the fixed section.
+- [x] Selected pre-bifurcation local resistance.
+- [x] Selected right-lung flow fraction.
+- [x] Selected right-superior share of right-lung flow.
 
 Optional secondary parameters:
 
-- [ ] Peak velocity in a defined region.
-- [ ] Pressure drop across the fixed section.
+- [x] Selected peak velocity on the fixed matched section.
+- [x] Retain pressure drop and area-averaged axial velocity as secondary tabulated metrics.
 - [ ] Wall shear stress only if near-wall mesh treatment is adequate.
 
 ## 5.5 Create sensitivity data and plots

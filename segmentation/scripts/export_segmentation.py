@@ -4,7 +4,7 @@ Run from the 3D Slicer Python console after cut_airways_centerline.py:
 
     exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segmentation.py").read())
 
-Set CASE to the same value used by the other segmentation scripts. The output is
+The case is read from the AirwayCase tag on the final model. The output is
 written to meshes/<case>/airways.stl so pre-op and post-op surfaces cannot
 silently overwrite each other.
 """
@@ -15,23 +15,8 @@ import slicer
 import vtk
 
 
-# Keep this in sync with segment_airway.py, calculate_centerline.py,
-# load_cutting_points.py, and cut_airways_centerline.py.
-CASE = "preop"
-
 MODEL_NODE_NAME = "AirwayExtendedSurfaceCapped"
 PROJECT_PATH = Path("/home/hvoverme/tracheomalacia_cfd")
-OUTPUT_PATH = PROJECT_PATH / "meshes" / CASE / "airways.stl"
-
-
-if CASE not in {"preop", "postop"}:
-    raise ValueError("CASE must be either 'preop' or 'postop'.")
-
-print("")
-print("======================================")
-print("Exporting capped airway surface")
-print("======================================")
-print("Case:", CASE)
 
 model_node = slicer.mrmlScene.GetFirstNodeByName(MODEL_NODE_NAME)
 if model_node is None or not model_node.IsA("vtkMRMLModelNode"):
@@ -40,12 +25,20 @@ if model_node is None or not model_node.IsA("vtkMRMLModelNode"):
         "Run cut_airways_centerline.py first."
     )
 
-model_case = model_node.GetAttribute("AirwayCase")
-if model_case is not None and model_case != CASE:
+CASE = model_node.GetAttribute("AirwayCase")
+if CASE not in {"preop", "postop"}:
     raise RuntimeError(
-        f"CASE mismatch: export_segmentation.py is set to '{CASE}', but "
-        f"'{MODEL_NODE_NAME}' is tagged '{model_case}'."
+        f"'{MODEL_NODE_NAME}' has no valid AirwayCase tag. Re-run "
+        "cut_airways_centerline.py from a tagged segmentation scene."
     )
+
+OUTPUT_PATH = PROJECT_PATH / "meshes" / CASE / "airways.stl"
+
+print("")
+print("======================================")
+print("Exporting capped airway surface")
+print("======================================")
+print("Using model case:", CASE)
 
 surface = model_node.GetPolyData()
 if surface is None or surface.GetNumberOfPoints() == 0:

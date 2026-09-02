@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "case": "preop",
+  "method": "Superior-most degree-1 network terminal to third degree>=3 bifurcation by centerline graph distance; first two bifurcations skipped because they represent the preoperative double pseudolumen",
+  "network_merge_tolerance_mm": 0.001,
+  "source_network_node": "AirwayNetworkModel",
+  "terminal_count": 6,
+  "branch_candidate_count": 4,
+  "tracheal_inlet": {
+    "network_point_id": 38,
+    "ras_mm": [
+      3.5165529251098633,
+      13.759490966796875,
+      -20.933584213256836
+    ]
+  },
+  "carina": {
+    "network_point_id": 3,
+    "ras_mm": [
+      5.786192417144775,
+      -12.816508293151855,
+      -57.68817138671875
+    ]
+  },
+  "tracheal_centerline_length_mm": 48.93740276252967,
+  "stenosis_location": {
+    "minimum_section_ras_mm": [
+      2.547750301906922,
+      -8.545158488123306,
+      -48.46571469038789
+    ],
+    "nearest_network_point_id": 14,
+    "network_snap_distance_mm": 0.13726462514896404,
+    "distance_from_inlet_mm": 37.453050849431506,
+    "distance_to_carina_mm": 11.484351913098168,
+    "relative_distance_from_inlet": 0.7653256759696391,
+    "relative_distance_to_carina": 0.23467432403036093,
+    "endpoints": [
+      {
+        "label": "StenosisSuperior",
+        "source_ras_mm": [
+          2.7988933238152924,
+          -2.6979786275820317,
+          -40.62963183475092
+        ],
+        "nearest_network_point_id": 22,
+        "network_snap_distance_mm": 1.1124646402313028,
+        "distance_from_inlet_mm": 28.13583943419442,
+        "distance_to_carina_mm": 20.801563328335263,
+        "relative_distance_from_inlet": 0.5749352815212628,
+        "relative_distance_to_carina": 0.42506471847873745
+      },
+      {
+        "label": "StenosisInferior",
+        "source_ras_mm": [
+          4.118454499999999,
+          -8.124462574119093,
+          -49.994
+        ],
+        "nearest_network_point_id": 13,
+        "network_snap_distance_mm": 1.1627013901342989,
+        "distance_from_inlet_mm": 40.29306626431113,
+        "distance_to_carina_mm": 8.64433649821855,
+        "relative_distance_from_inlet": 0.8233593118914491,
+        "relative_distance_to_carina": 0.17664068810855107
+      }
+    ]
+  }
+}

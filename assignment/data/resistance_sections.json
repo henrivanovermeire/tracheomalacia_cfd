@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "case_geometry": "postop",
+  "coordinate_system": "RAS",
+  "coordinate_units": "m",
+  "normal_orientation": "superior-to-inferior along the tracheal centerline",
+  "source_profile": "assignment/data/postop_stenosis_profile.csv",
+  "source_matched_location": "assignment/data/postop_matched_location.json",
+  "planes": {
+    "superior": {
+      "role": "upstream boundary of the anatomically matched region",
+      "origin": [0.00283233904838562, 0.11692406463623047, 1.34405615234375],
+      "normal": [0.115374198248124, -0.5069107116258433, -0.8542425444904883]
+    },
+    "matched": {
+      "role": "postoperative section corresponding to the preoperative minimum",
+      "origin": [0.005021986530882967, 0.11206829872607256, 1.3354041702046213],
+      "normal": [0.22076353891514097, -0.5436907854039204, -0.8097306896447307]
+    },
+    "inferior": {
+      "role": "downstream boundary of the anatomically matched region",
+      "origin": [0.00556831169128418, 0.11055686950683594, 1.33302294921875],
+      "normal": [0.2085914467486757, -0.49947093993842656, -0.8408438550053863]
+    }
+  }
+}
