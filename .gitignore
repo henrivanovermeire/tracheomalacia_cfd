@@ -225,3 +225,6 @@ openFOAM/postop/*
 !openFOAM/postop/0/
 !openFOAM/postop/constant/
 !openFOAM/postop/system/
+
+# Keep the verified Gmsh input mesh for reproducible CFD runs.
+!openFOAM/postop/airways.msh
