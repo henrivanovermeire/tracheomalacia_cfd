@@ -16,10 +16,10 @@ CreateGeometry;
 // --------------------
 
 // Replace these with the cap IDs you identify once
-inlet[]  = {30};
-outlet1[] = {27};
-outlet2[] = {28};
-outlet3[] = {29};
+inlet[]  = {25};
+outlet1[] = {22};
+outlet2[] = {23};
+outlet3[] = {24};
 
 all[] = Surface{:};
 
