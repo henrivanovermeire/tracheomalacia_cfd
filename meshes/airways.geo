@@ -15,11 +15,11 @@ CreateGeometry;
 // Boundary groups
 // --------------------
 
-// Replace these with the cap IDs you identify once
-inlet[]  = {25};
-outlet1[] = {22};
-outlet2[] = {23};
-outlet3[] = {24};
+// Cap elementary-surface IDs for this airway geometry.
+inlet[]   = {25}; // tracheal inlet
+outlet1[] = {23}; // upper-right outlet
+outlet2[] = {24}; // lower-right outlet
+outlet3[] = {22}; // left outlet
 
 all[] = Surface{:};
 
