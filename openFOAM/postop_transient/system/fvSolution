@@ -1,0 +1,21 @@
+FoamFile { format ascii; class dictionary; object fvSolution; }
+solvers
+{
+    p { solver GAMG; tolerance 1e-8; relTol 0.01; smoother GaussSeidel; }
+    pFinal { $p; relTol 0; }
+    U { solver smoothSolver; smoother symGaussSeidel; tolerance 1e-8; relTol 0.01; }
+    UFinal { $U; relTol 0; }
+}
+PIMPLE
+{
+    momentumPredictor yes;
+    nOuterCorrectors 3;
+    nCorrectors 2;
+    nNonOrthogonalCorrectors 1;
+    residualControl
+    {
+        p { tolerance 1e-2; relTol 0; }
+        U { tolerance 2e-3; relTol 0; }
+    }
+}
+relaxationFactors { fields { p 0.5; } equations { U 0.7; } }

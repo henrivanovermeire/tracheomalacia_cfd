@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "case": "postop_hxt_025",
+  "foam_case": "/home/hvoverme/tracheomalacia_cfd/results/postop_hxt_025/postop_hxt_025.foam",
+  "time": 596.0,
+  "air_density_kg_m3": 1.204,
+  "pressure_definition": "OpenFOAM kinematic pressure; dimensional pressure=rho*p",
+  "sections_source": "assignment/data/resistance_sections.json",
+  "planes": {
+    "superior": {
+      "name": "superior",
+      "role": "upstream boundary of the anatomically matched region",
+      "origin_m": [
+        0.00283233904838562,
+        0.11692406463623047,
+        1.34405615234375
+      ],
+      "normal": [
+        0.115374198248124,
+        -0.5069107116258433,
+        -0.8542425444904883
+      ],
+      "area_m2": 7.188295387926615e-06,
+      "area_average_kinematic_pressure_m2_s2": 51.94288432092512,
+      "flow_rate_m3_s": 3.373006044994739e-05,
+      "area_average_axial_velocity_m_s": 4.692358706710919,
+      "peak_velocity_magnitude_m_s": 5.795211297393364
+    },
+    "matched": {
+      "name": "matched",
+      "role": "postoperative section corresponding to the preoperative minimum",
+      "origin_m": [
+        0.005021986530882967,
+        0.11206829872607256,
+        1.3354041702046213
+      ],
+      "normal": [
+        0.22076353891514097,
+        -0.5436907854039204,
+        -0.8097306896447307
+      ],
+      "area_m2": 5.1434695779979285e-06,
+      "area_average_kinematic_pressure_m2_s2": 24.799341222848224,
+      "flow_rate_m3_s": 3.3762042777860586e-05,
+      "area_average_axial_velocity_m_s": 6.564059972724151,
+      "peak_velocity_magnitude_m_s": 9.446518178667668
+    },
+    "inferior": {
+      "name": "inferior",
+      "role": "downstream boundary of the anatomically matched region",
+      "origin_m": [
+        0.00556831169128418,
+        0.11055686950683594,
+        1.33302294921875
+      ],
+      "normal": [
+        0.2085914467486757,
+        -0.49947093993842656,
+        -0.8408438550053863
+      ],
+      "area_m2": 6.07976715668803e-06,
+      "area_average_kinematic_pressure_m2_s2": 26.429104230296996,
+      "flow_rate_m3_s": 3.3845929916201204e-05,
+      "area_average_axial_velocity_m_s": 5.566977985163311,
+      "peak_velocity_magnitude_m_s": 9.062138028536115
+    }
+  },
+  "region_metrics": {
+    "kinematic_pressure_drop_m2_s2": 25.51378009062812,
+    "pressure_drop_pa": 30.718591229116257,
+    "mean_section_flow_rate_m3_s": 3.37879951830743e-05,
+    "local_resistance_pa_s_m3": 909156.9672208421,
+    "local_resistance_pa_per_l_min": 15.15261612034737
+  }
+}

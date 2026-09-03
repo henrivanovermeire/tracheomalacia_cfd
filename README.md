@@ -120,6 +120,24 @@ and Gnuplot/LaTeX reporting, with:
 Resume interrupted studies without repeating valid fetched cases using `--resume`;
 reanalyze an already fetched complete study using `--skip-runs`.
 
+Prepare and run the Assignment 6 transient case on the selected 0.15 mm HXT mesh:
+
+```bash
+# Short 0--0.05 s Courant/runtime diagnostic (the default mode)
+./run_transient_workflow.sh <DROPLET_IP> --timing
+
+# After accepting timing behaviour, continue with the 0--0.55 s peak-flow pilot
+./run_transient_workflow.sh <DROPLET_IP> --pilot
+
+# After accepting pilot stability, run the full 2 s breathing cycle
+./run_transient_workflow.sh <DROPLET_IP> --full
+```
+
+The waveform is generated reproducibly from a 2 L/min minute volume, 30 breaths
+per minute, and a symmetric 2 s sinusoid. Set `NPROCS` (default 48),
+`REMOTE_USER`, or `REMOTE_REPO` as needed. The fetched ParaView marker is
+`results/postop_transient/postop_transient.foam`.
+
 See [`WORKFLOW.md`](WORKFLOW.md) for installation instructions, the complete
 Slicer-to-ParaView procedure, physical-boundary verification, remote execution,
 and mesh-independence guidance.

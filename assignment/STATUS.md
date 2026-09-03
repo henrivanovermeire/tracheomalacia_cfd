@@ -31,11 +31,11 @@ word-limit compliance must also be present in the final submission.
 | Reproducible processing workflow | ✅ | Slicer-to-Gmsh-to-OpenFOAM workflow documented and scripted |
 | Preoperative anatomy | 🟡 | Segmentation and stenosis measurements are complete; final annotated report figure remains |
 | Postoperative anatomy | 🟡 | Segmentation/CFD pipeline has been exercised; final report evidence remains incomplete |
-| Baseline CFD simulation | 🟡 | Simulation and result-fetch workflow work; quantitative findings are not yet entered in the report |
-| Fine-mesh CFD simulation | 🟡 | Automated workflow exists; final mesh-independence results are not yet documented |
+| Baseline CFD simulation | ✅ | Converged 2 L/min result, residuals, pressure, velocity, resistance, and outlet distribution are documented |
+| Fine-mesh CFD simulation | ✅ | Four-level HXT study completed; 0.15 mm selected as optimal based on accuracy/cost trade-off |
 | Assignment 3 response | 🟡 | All numerical and written requirements are complete; only final annotated pre-/postoperative reconstruction figures remain |
-| Assignment 4 response | 🟡 | Steady postoperative OpenFOAM result exists; required post-processing, figures, resistance, and text remain |
-| Assignment 5 response | 🟡 | Baseline/fine OpenFOAM workflow exists; plots, quantitative comparison, discussion, and accepted artifact submission remain |
+| Assignment 4 response | 🟡 | Quantitative analysis and principal figures are complete; resistance-plane visualization and extra-iteration check remain |
+| Assignment 5 response | 🟡 | Numerical analysis, plots, discussion, limitations, and mesh selection are complete; submission packaging remains |
 | Assignment 6 response | ⬜ | No transient breathing-cycle simulation or required transient analyses implemented yet |
 | Final LaTeX report | 🟡 | Template builds successfully; most result placeholders remain |
 
@@ -199,38 +199,38 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Run multiple postoperative mesh resolutions | 🟡 | End-to-end HXT workflow implemented for 0.25, 0.20, 0.15, and 0.12 mm; rejected Delaunay 0.20 mm exposed non-convergence/slivers | Run the four quality-consistent HXT cases |
-| Record number of elements for every mesh | ⬜ | Counts may exist in logs | Extract and tabulate final counts |
+| Run multiple postoperative mesh resolutions | ✅ | HXT cases completed at 0.25, 0.20, 0.15, and 0.12 mm; all reconstructed and fetched | None |
+| Record number of elements for every mesh | ✅ | 180,163; 339,886; 776,568; and 1,493,440 cells recorded | None |
 | Select parameters of interest | ✅ | Fixed metrics: local resistance, right-lung fraction, right-superior share of right flow, and matched-section peak velocity | None |
-| Plot each parameter against element count | ⬜ | No plots documented | Generate one X–Y plot per parameter |
-| Calculate differences relative to densest mesh | ⬜ | Formula documented in `ASSIGNMENT.md` | Calculate values for every non-reference mesh |
-| Plot percentage differences | ⬜ | No plots documented | Generate and label percentage-difference plots |
-| State exact percentage-difference formula | 🟡 | Candidate formula archived | Include chosen formula in final response |
-| Respect 150-word limit | ⬜ | No final response drafted | Draft, count, and revise |
+| Plot each parameter against element count | ✅ | Gnuplot/cairolatex 2×2 metric figure generated and integrated | None |
+| Calculate differences relative to densest mesh | ✅ | All four metrics compared with 0.12 mm; densest non-convergence explicitly qualified | None |
+| Plot percentage differences | ✅ | Gnuplot/cairolatex difference figure generated and integrated | None |
+| State exact percentage-difference formula | ✅ | `|phi_i-phi_dense|/|phi_dense| × 100%` stated | None |
+| Respect 150-word limit | ✅ | Final results response in `ASSIGNMENT_5.md` is within limit | None |
 
 ## 5.2 Discussion — 2 points, max. 100 words
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Interpret mesh-sensitivity results | ⬜ | Fine workflow exists, but no quantitative comparison documented | Interpret convergence trends and anomalous values |
-| Identify and justify optimal mesh | ⬜ | No criterion selected | Balance parameter convergence against cell count/runtime |
-| Respect 100-word limit | ⬜ | No final response drafted | Draft, count, and revise |
+| Interpret mesh-sensitivity results | ✅ | Resistance and small-branch split identified as most sensitive; densest non-convergence discussed | None |
+| Identify and justify optimal mesh | ✅ | 0.15 mm selected using 2.5% criterion and efficiency trade-off | None |
+| Respect 100-word limit | ✅ | Final discussion response in `ASSIGNMENT_5.md` is within limit | None |
 
 ## 5.3 Limitations — 2 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Discuss current-model limitations, max. 150 words | 🟡 | Limitations listed in `report/report.tex` | Tailor discussion to actual model and word limit |
-| Explain how to make model more realistic | 🟡 | Candidate improvements identified in report template | Prioritise and justify specific improvements |
-| Explain expanded mesh study, max. 100 words | ⬜ | No final response | Discuss additional levels, local refinement, formal convergence metrics, and computational cost |
+| Discuss current-model limitations, max. 150 words | ✅ | Final case-specific 130-word limitations response | None |
+| Explain how to make model more realistic | ✅ | Transient flow, compliant walls, distal impedance, uncertainty and validation addressed | None |
+| Explain expanded mesh study, max. 100 words | ✅ | Final 95-word expansion response covers local refinement, convergence, layers and GCI | None |
 
 ## 5.4 Interpretation — 2 points, max. 100 words
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Draw/explain resistance during increasing inspiratory flow | ⬜ | Resistance and viscous pressure-loss equations documented | Produce the requested sketch and concise derivation |
-| Connect `R = Δp/Q` with constant-diameter pressure–flow relation | 🟡 | Theory documented in Assignment 3 materials | State expected constant resistance for linear laminar Poiseuille behaviour and relevant caveats |
-| Respect 100-word limit | ⬜ | No final response drafted | Draft, count, and revise |
+| Draw/explain resistance during increasing inspiratory flow | ✅ | Final explanation predicts constant resistance for ideal Poiseuille flow | None |
+| Connect `R = Δp/Q` with constant-diameter pressure–flow relation | ✅ | Derivation and patient-specific deviations documented | None |
+| Respect 100-word limit | ✅ | Final interpretation response is within limit | None |
 
 ---
 
@@ -240,25 +240,25 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Configure transient postoperative simulation | ⬜ | Current case is steady `simpleFoam` | Select transient solver and configure the case |
-| Define material properties | 🟡 | Steady case uses `ν = 1.5e-5 m²/s` | Verify transient properties and report density if dimensional pressure is used |
-| Apply time-varying breathing inlet profile | ⬜ | Current inlet is a constant volumetric flow rate | Obtain/define waveform and implement time-dependent boundary condition |
-| Document all boundary conditions | ⬜ | Steady conditions exist only | Define and justify transient inlet/outlet/wall conditions |
-| Select and document time-step size | ⬜ | No transient setup | Perform temporal-resolution/Courant-number assessment |
-| Discuss residual evolution | ⬜ | No transient run | Export residual history by time step |
-| Define convergence assessment | ⬜ | No transient convergence criterion | Specify residual and iteration criteria plus mass conservation checks |
-| Identify unconverged time steps | ⬜ | No transient run | Analyse every time step after simulation |
+| Configure transient postoperative simulation | 🟡 | `prepare_transient_case.sh`; 0.15 mm HXT mesh; `pimpleFoam` | Run and accept pilot |
+| Define material properties | ✅ | Incompressible Newtonian air; `ν = 1.5e-5 m²/s`, `ρ = 1.204 kg/m³` for dimensional pressure | Add final citation for density |
+| Apply time-varying breathing inlet profile | ✅ | Versioned sinusoidal table and generator; ±6.283 L/min peak | None |
+| Document all boundary conditions | ✅ | Flow-rate inlet, reversal-capable pressure outlets, no-slip wall documented in report | None |
+| Select and document time-step size | 🟡 | Original `maxCo=1` rejected as too costly; revised timing test uses initial 1e-5 s, adaptive to 5e-5 s, `maxCo=2` | Assess completed timing log and peak-flow pilot |
+| Discuss residual evolution | 🟡 | Early tests show tight linear convergence but strict outer criteria were not met | Parse complete timing/pilot logs by time step |
+| Define convergence assessment | 🟡 | Outer targets U=2e-3, p=1e-2; linear tolerances remain 1e-8; continuity monitored | Validate criteria over completed timing run |
+| Identify unconverged time steps | ⬜ | No transient run yet | Analyse every time step after simulation |
 
 ## 6.2 Results — 5.5 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Velocity vectors coloured by magnitude at three time points | ⬜ | No transient fields | Select three relevant phases and create consistent ParaView figures |
-| Explain time-point selection | ⬜ | No phases selected | Relate choices to acceleration, peak flow, and deceleration/reversal |
-| Plot postoperative local resistance over a complete cycle | ⬜ | No transient simulation or section analysis | Compute section-averaged pressure difference and flow over time |
-| Use same section as Assignment 4 | ⚠️ | Assignment 4 has not yet been extracted and section is not documented | Extract Assignment 4 and define reusable section locations |
-| Compare with constant-diameter expectation | ⬜ | Assignment 5 theory not yet answered | Explain effects of geometry, inertia, separation, and phase lag |
-| Plot applied inlet flow waveform | ⬜ | No waveform selected | Plot exact boundary-condition data |
+| Velocity vectors coloured by magnitude at three time points | ⬜ | Candidate phases: 0.25, 0.50, and 1.50 s | Create consistent ParaView figures after full run |
+| Explain time-point selection | 🟡 | Acceleration, peak inspiration, and peak expiration selected conceptually | Confirm against saved output times |
+| Plot postoperative local resistance over a complete cycle | ⬜ | Fixed planes exist; no transient fields yet | Compute section-averaged pressure difference and flow over time |
+| Use same section as Assignment 4 | ✅ | `assignment/data/resistance_sections.json` | Reuse unchanged in transient extractor |
+| Compare with constant-diameter expectation | 🟡 | Inertia, separation, phase lag, and hysteresis described conceptually | Ground discussion in computed curve |
+| Plot applied inlet flow waveform | ✅ | `assignment6_breathing_waveform.tex/.pdf` generated from exact boundary table | None |
 | Sketch qualitative pre-/postoperative resistance | ⬜ | No sketch | Produce panel B requested by assignment |
 | Explain pre-/postoperative resistance difference | ⬜ | No final interpretation | Link stenosis and unsteady losses to expected behaviour |
 

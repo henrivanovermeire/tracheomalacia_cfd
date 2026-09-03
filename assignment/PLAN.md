@@ -329,24 +329,25 @@ clear refinement sequence.
 
 For every level:
 
-- [ ] Generate with `create_volume_mesh.sh` or a generalised multi-mesh runner.
-- [ ] Use the same postoperative STL and physical-surface definition.
-- [ ] Inspect physical groups in Gmsh.
-- [ ] Confirm `inlet`, `outlet_1`, `outlet_2`, `outlet_3`, `wall`, and `fluid`.
-- [ ] Record element count and complete mesh-quality metrics.
-- [ ] Reject meshes with invalid topology or unacceptable quality.
+- [x] Generated all levels with `run_mesh_sensitivity.sh` and the HXT algorithm.
+- [x] Used the same postoperative STL and physical-surface definition.
+- [x] Preserved and verified the named physical groups.
+- [x] Confirmed `inlet`, `outlet_1`, `outlet_2`, `outlet_3`, `wall`, and `fluid`.
+- [x] Recorded element count and mesh-quality metrics.
+- [x] Rejected the original sliver-prone Delaunay refinement and replaced the
+      entire series consistently with HXT.
 
 Changing only `MESH_SIZE` should not alter physical groups, but verification is
 still mandatory.
 
 ## 5.3 Run every mesh with identical physics
 
-- [ ] Use identical material properties and boundary conditions.
-- [ ] Use identical solver schemes, convergence criteria, and maximum iterations.
-- [ ] Set `numberOfSubdomains` equal to `NPROCS`.
-- [ ] Run remotely using unique case names.
-- [ ] Reconstruct and fetch every result.
-- [ ] Record runtime and memory use.
+- [x] Used identical material properties and 2 L/min boundary conditions.
+- [x] Used identical solver schemes, convergence criteria, and iteration limit.
+- [x] Set `numberOfSubdomains` equal to `NPROCS`.
+- [x] Ran remotely using unique HXT case names.
+- [x] Reconstructed and fetched every result.
+- [x] Recorded reported solver runtime; memory use was not available.
 
 Suggested names:
 
@@ -373,33 +374,34 @@ Optional secondary parameters:
 
 ## 5.5 Create sensitivity data and plots
 
-- [ ] Create `assignment/data/mesh_sensitivity.csv` with one row per mesh.
-- [ ] Plot every parameter versus number of volume elements.
+- [x] Created `assignment/data/mesh_sensitivity.csv` with one row per mesh.
+- [x] Plotted every selected parameter versus number of volume elements.
 - [ ] Calculate percentage difference from the densest mesh:
 
 ```text
 δ_i = |φ_i - φ_dense| / |φ_dense| × 100%
 ```
 
-- [ ] Plot percentage difference versus element count for every parameter.
-- [ ] Use consistent units, labels, and significant figures.
-- [ ] Select an acceptance threshold before declaring an optimal mesh.
+- [x] Plotted percentage difference versus element count for every parameter.
+- [x] Used consistent units, labels, and significant figures.
+- [x] Applied a practical 2.5% acceptance threshold.
 
 ## 5.6 Choose the optimal mesh
 
-- [ ] Select the coarsest mesh satisfying the acceptance criterion for all
-      primary parameters.
-- [ ] Compare accuracy gain with runtime and memory increase.
-- [ ] Explain any non-monotonic convergence.
+- [x] Selected the 0.15 mm mesh: all selected differences are ≤2.02% relative
+      to the denser result.
+- [x] Compared gain with the 92% cell-count and 157% runtime increase at 0.12 mm.
+- [x] Documented that the densest case was not residually converged and therefore
+      is not treated as a truth solution.
 - [ ] Package the accepted Gmsh/OpenFOAM equivalents requested for submission.
 
 ## 5.7 Optional mesh-quality improvement gate
 
 The current mesh has no prism layers. Before finalising the study, decide:
 
-- [ ] Whether Assignment 5 parameters are sufficiently integral/bulk quantities
-      for the tetrahedral approach.
-- [ ] Whether boundary-layer elements are needed for wall shear stress claims.
+- [x] Restricted conclusions to integral/bulk and fixed-section quantities
+      suitable for the tetrahedral approach.
+- [x] Excluded wall-shear claims because no dedicated boundary layers exist.
 - [ ] If the mesh method changes, regenerate every level consistently; do not
       compare mixed meshing strategies as one refinement sequence.
 
@@ -421,12 +423,12 @@ section.
 
 ## 6.1 Define the breathing waveform
 
-- [ ] Obtain the prescribed course waveform or document the source of a chosen
-      physiological waveform.
-- [ ] Store time and volumetric flow rate in a versioned table.
-- [ ] Plot the exact waveform before implementing it.
-- [ ] Confirm sign convention for inspiration and expiration.
-- [ ] Confirm total cycle duration and tidal volume.
+- [x] Define and document a simplified physiological sinusoid based on the
+      assumed infant minute ventilation.
+- [x] Store time and volumetric flow rate in a versioned table.
+- [x] Plot the exact waveform before implementing it.
+- [x] Confirm sign convention: positive inspiration, negative expiration.
+- [x] Confirm the 2.0 s cycle and 66.7 mL tidal volume.
 
 Suggested artifact:
 
@@ -437,22 +439,27 @@ assignment/data/breathing_waveform.csv
 
 ## 6.2 Configure the transient OpenFOAM case
 
-- [ ] Copy the selected optimal steady case to `postop_transient`.
-- [ ] Select and document the transient incompressible solver.
-- [ ] Implement the time-varying inlet flow boundary condition.
-- [ ] Review outlet conditions for flow reversal during expiration.
-- [ ] Retain no-slip rigid walls unless an approved extension is undertaken.
-- [ ] Initialise from a suitable converged steady field where physically valid.
-- [ ] Configure residual/function-object output for every time step.
+- [x] Copy the selected 0.15 mm HXT mesh to `postop_transient` reproducibly.
+- [x] Select and document the transient incompressible `pimpleFoam` solver.
+- [x] Implement the tabulated time-varying `flowRateInletVelocity` condition.
+- [x] Use `pressureInletOutletVelocity` to permit outlet flow reversal.
+- [x] Retain no-slip rigid walls.
+- [x] Initialise the first cycle from rest; assess startup dependence before
+      treating a cycle as periodic.
+- [x] Configure solver logging and fields every 0.02 s.
 
 ## 6.3 Select time step and run temporal checks
 
-- [ ] Estimate time step from mesh scale, peak velocity, and target Courant
-      number.
-- [ ] Run a short pilot around peak flow.
-- [ ] Monitor maximum Courant number.
-- [ ] Check convergence within every time step.
-- [ ] Adjust time step, inner correctors, relaxation, or linear solvers as needed.
+- [x] Reject the original `maxCo=1` setup after it forced `deltaT` below 1e-5 s
+      by t=0.0099 s while the mean Courant number remained below 0.08.
+- [x] Configure a 0--0.05 s timing mode with `maxCo=2`, maximum `deltaT=5e-5 s`,
+      and transient outer-loop criteria distinct from the tight linear tolerances.
+- [ ] Complete and analyse the timing diagnostic.
+- [ ] Run the 0--0.55 s pilot through peak inspiratory flow.
+- [x] Monitor early maximum Courant behavior; revised run holds max Co near 2.02.
+- [ ] Check convergence within every time step over the completed timing run.
+- [x] Adjust outer stopping criteria to p=1e-2 and U=2e-3 while retaining
+      1e-8 linear-equation tolerances.
 - [ ] Compare at least two time steps for one key transient quantity.
 
 ## 6.4 Establish periodicity
@@ -524,16 +531,16 @@ Work strictly in this order:
 1. [x] Complete the structured review of Taherian et al. and verify key
        numerical details.
 2. [x] Complete all five Assignment 1 sections; optional figures were not used.
-3. [ ] **Next:** review the Assignment 2 lecture and submit the prepared
-       questions.
-4. [ ] Freeze the postoperative geometry and complete/freeze the preoperative
-       geometry.
-5. [ ] Perform Assignment 3 cross-sectional measurements and annotated figures.
-6. [ ] Build automated Assignment 4 residual, patch-flow, and resistance
-       extraction before launching more meshes.
-7. [ ] Run at least three Assignment 5 mesh levels with identical physics.
-8. [ ] Select the optimal mesh.
-9. [ ] Configure and validate the Assignment 6 transient breathing-cycle case.
+3. [ ] Review the Assignment 2 lecture and submit the prepared questions.
+4. [x] Freeze the postoperative and preoperative computational geometries.
+5. [x] Perform Assignment 3 cross-sectional measurements; anatomical screenshots
+       remain deferred.
+6. [x] Automate Assignment 4 residual, patch-flow, and resistance extraction.
+7. [x] Run the consistent HXT mesh-sensitivity series for Assignment 5.
+8. [x] Select the 0.15 mm HXT mesh.
+9. [x] Configure the Assignment 6 waveform and transient case.
+10. [ ] **Next:** run and assess the 0--0.55 s transient pilot before launching
+        the full cycle.
 
 ## Data directory to create as work begins
 

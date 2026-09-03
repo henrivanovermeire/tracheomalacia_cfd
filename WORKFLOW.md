@@ -317,7 +317,57 @@ Inspect the generated mesh in Gmsh before transferring it:
 gmsh openFOAM/postop/airways.msh
 ```
 
-## 10. Run OpenFOAM
+## 12. Run the postoperative transient workflow
+
+Assignment 6 reuses the selected `0.15 mm` HXT mesh from
+`results/postop_hxt_015/constant/polyMesh`. Generate the exact sinusoidal
+boundary table and prepare the local case with:
+
+```bash
+NPROCS=48 ./prepare_transient_case.sh postop_transient
+```
+
+The configured waveform has a 2 s period, 30 breaths/min, 66.7 mL tidal volume,
+and ±6.283 L/min peak flow. Positive flow is inspiration and negative flow is
+expiration. The case uses `pimpleFoam`, adaptive time stepping with `maxCo=2`,
+an initial `deltaT` of `1e-5 s`, and a maximum `deltaT` of `5e-5 s`. Linear
+systems retain an absolute tolerance of `1e-8`; the PIMPLE outer-loop stopping
+criteria are `2e-3` for velocity and `1e-2` for pressure.
+
+Run the short timing diagnostic before approaching peak flow:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --timing
+```
+
+This runs through `0.05 s`. Inspect
+`results/postop_transient/log.pimpleFoam.timing`, the extended `checkMesh` log,
+and `log.postProcess.CourantNo`. If the observed time-step behavior and
+convergence are acceptable, run the peak-flow pilot through `0.55 s`:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --pilot
+```
+
+Each mode prepares a clean case from time zero, uploads it, runs, calls
+`reconstructPar`, and fetches the reconstructed case. Only after accepting the
+peak-flow pilot run:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --full
+```
+
+The full mode starts cleanly from time zero and simulates one 2 s cycle; it does
+not continue the pilot. A single cycle starting from rest is not automatically
+periodic. If corresponding start/end or consecutive-cycle metrics differ beyond
+the chosen tolerance, extend the simulation to another cycle before reporting a
+final periodic cycle. Open the fetched reconstruction with:
+
+```bash
+paraview results/postop_transient/postop_transient.foam
+```
+
+## 13. Run OpenFOAM
 
 `run_cfd.sh` does not generate a Gmsh mesh. It requires an existing, verified:
 

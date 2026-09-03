@@ -431,9 +431,10 @@ uniform target characteristic length controlled by \texttt{MESH\_SIZE}.
     \toprule
     Mesh & Target size (mm) & Points & Cells & Element type & Max. aspect ratio & Max. non-orthogonality \\
     \midrule
-    Coarse   & [insert] & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
-    Baseline & 0.25     & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
-    Fine     & 0.15     & [insert] & [insert] & Tetrahedron & [insert] & [insert] \\
+    HXT baseline & 0.25 & 39,977  & 180,163   & Tetrahedron & 114.14 & 88.63$^\circ$ \\
+    HXT fine 1   & 0.20 & 71,198  & 339,886   & Tetrahedron & 11.73  & 80.29$^\circ$ \\
+    HXT fine 2   & 0.15 & 151,599 & 776,568   & Tetrahedron & 12.63  & 69.82$^\circ$ \\
+    HXT densest  & 0.12 & 281,330 & 1,493,440 & Tetrahedron & 88.00  & 82.34$^\circ$ \\
     \bottomrule
   \end{tabular}%
   }
@@ -564,10 +565,52 @@ and Git commit are recorded in Table~\ref{tab:software}.
 \subsection{Transient solver and breathing waveform}
 \label{sec:transient_method}
 
-[Configure and document the Assignment 6 transient postoperative case. State the
-OpenFOAM solver, breathing-cycle duration, inlet flow-rate waveform, time-step
-size, maximum Courant number, number of inner correctors/iterations, write
-interval, number of simulated cycles, and criterion for cycle periodicity.]
+The selected \num{0.15}~mm HXT mesh is reused for the postoperative transient
+simulation. The incompressible, Newtonian equations are solved with
+\texttt{pimpleFoam}. A symmetric sinusoidal volumetric-flow boundary condition is
+prescribed at the tracheal inlet,
+\begin{equation}
+  Q(t)=Q_{\max}\sin\left(\frac{2\pi t}{T}\right),
+\end{equation}
+where $T=\SI{2.0}{\second}$ and
+$Q_{\max}=\SI{1.0472e-4}{\metre\cubed\per\second}$
+(\SI{6.283}{\litre\per\minute}). The positive half-cycle represents inspiration
+and the negative half-cycle expiration. Integrating either half-cycle gives a
+tidal volume of \SI{66.7}{\milli\litre}, consistent with the assumed
+\SI{2}{\litre\per\minute} minute ventilation at 30 breaths per minute.
+
+The inlet uses \texttt{flowRateInletVelocity}. All three outlets have zero fixed
+kinematic pressure and \texttt{pressureInletOutletVelocity}, which permits flow
+reversal during expiration. The rigid airway wall remains no-slip. Time is
+discretised with the second-order backward scheme. Three PIMPLE outer correctors,
+two pressure correctors, and one non-orthogonal corrector are used. An initial
+time step of \SI{1e-5}{\second} is adjusted subject to $\mathrm{Co}_{\max}=2$
+and a maximum step of \SI{5e-5}{\second}; fields are written every
+\SI{0.02}{\second}. The original $\mathrm{Co}_{\max}=1$ timing test was rejected
+because a small subset of cells forced the step below \SI{1e-5}{\second} while
+the mean Courant number remained below 0.08. A \SI{0.05}{\second} timing run and
+a subsequent pilot through \SI{0.55}{\second} precede the complete cycle. Pilot
+results determine whether these controls are adequate;
+periodicity cannot be claimed from a single cycle and will be assessed by
+comparing corresponding quantities in consecutive cycles if an additional cycle
+is required.
+
+At the estimated peak mean velocity of approximately
+\SI{20.3}{\metre\per\second} in the matched section, the Mach number is about
+0.06, supporting the incompressibility approximation. The corresponding Reynolds
+number is approximately 3500, so transitional effects remain a model limitation.
+A shorter, more realistic mechanically ventilated inspiratory phase would require
+a larger peak flow for the same tidal volume and could approach the commonly used
+$\mathrm{Ma}=0.1$ compressibility threshold.
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.88\textwidth}{!}{\input{figures/assignment6_breathing_waveform.tex}}
+  \caption{Prescribed sinusoidal inlet flow for the postoperative transient
+  simulation. Positive and negative flow denote inspiration and expiration,
+  respectively.}
+  \label{fig:transient_waveform}
+\end{figure}
 
 \begin{table}[htbp]
   \centering
@@ -577,12 +620,17 @@ interval, number of simulated cycles, and criterion for cycle periodicity.]
     \toprule
     Parameter & Value \\
     \midrule
-    Solver & [insert] \\
-    Breathing-cycle duration & [insert] \si{\second} \\
-    Time-step size & [insert] \si{\second} \\
-    Maximum Courant number & [insert] \\
-    Simulated cycles & [insert] \\
-    Time-step convergence criterion & [insert] \\
+    Solver & \texttt{pimpleFoam} \\
+    Breathing-cycle duration & \SI{2.0}{\second} \\
+    Initial / maximum time step & \SI{1e-5}{\second} / \SI{5e-5}{\second} \\
+    Maximum Courant number & 2.0 \\
+    Field write interval & \SI{0.02}{\second} \\
+    Timing / pilot intervals & \SI{0.05}{\second} / \SI{0.55}{\second} \\
+    Simulated cycles & One initially; extend if not periodic \\
+    PIMPLE correctors & Up to 3 outer, 2 pressure, 1 non-orthogonal \\
+    Outer stopping targets & $2\times10^{-3}$ ($U$), $10^{-2}$ ($p$) \\
+    Linear-equation tolerance & $10^{-8}$ ($U$ and $p$) \\
+    Parallel decomposition & Scotch, 48 MPI ranks \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -669,27 +717,37 @@ $d$, the Assignment 5 percentage difference is defined as
   \centering
   \caption{Mesh-independence comparison.}
   \label{tab:mesh_independence}
-  \begin{tabular}{@{}lrrr@{}}
+  \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Quantity & Coarse & Baseline & Fine/reference \\
+    Quantity & 0.25 mm & 0.20 mm & 0.15 mm & 0.12 mm \\
     \midrule
-    Pre-bifurcation resistance & [insert] & [insert] & [insert] \\
-    Peak velocity              & [insert] & [insert] & [insert] \\
-    Left-lung flow fraction    & [insert] & [insert] & [insert] \\
-    Right-lung flow fraction   & [insert] & [insert] & [insert] \\
+    Resistance (Pa/(L/min)) & 15.153 & 16.361 & 17.544 & 17.906 \\
+    Peak velocity (m/s) & 9.447 & 9.573 & 9.670 & 9.822 \\
+    Right-lung fraction (\%) & 73.664 & 73.619 & 73.686 & 73.397 \\
+    Right-superior share (\%) & 15.231 & 15.597 & 16.017 & 16.250 \\
+    Solver iterations & 596 & 770 & 1611 & 2000$^*$ \\
     \bottomrule
   \end{tabular}
+  \\[2pt]\footnotesize{$^*$Iteration limit reached without satisfying residual control.}
 \end{table}
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: one X--Y plot per parameter of interest versus mesh element
-    count, plus percentage difference relative to the densest mesh}}
-  \caption{Postoperative mesh-sensitivity study. The x-axis reports volume
-  element count; each parameter and its percentage difference from the densest
-  mesh are shown separately.}
+  \resizebox{0.98\textwidth}{!}{\input{figures/assignment5_mesh_metrics.tex}}
+  \caption{Postoperative mesh-sensitivity metrics as functions of actual volume
+  cell count. All meshes use identical geometry, boundary conditions, sampling
+  planes, and HXT tetrahedral meshing strategy.}
   \label{fig:mesh_sensitivity}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \resizebox{0.98\textwidth}{!}{\input{figures/assignment5_mesh_differences.tex}}
+  \caption{Absolute relative differences from the densest 0.12 mm mesh,
+  calculated as $|\phi_i-\phi_d|/|\phi_d|\times100\%$. The densest case reached
+  its 2000-iteration limit without satisfying residual control and is therefore
+  a requested comparison rather than an accepted truth solution.}
+  \label{fig:mesh_sensitivity_differences}
 \end{figure}
 
 % -----------------------------------------------------------------------------
@@ -899,20 +957,24 @@ from physiological inference.]
 
 \subsection{Mesh sensitivity and optimal mesh}
 
-[Interpret the parameter and percentage-difference plots in
-Figure~\ref{fig:mesh_sensitivity}. Select the coarsest mesh for which every
-clinically relevant integral quantity changes by less than the predefined
-acceptance criterion relative to the densest mesh. Justify that choice using
-both numerical accuracy and computational cost.]
+Resistance and the small right-superior branch split were more mesh-sensitive
+than total right-lung fraction. From 0.15 to 0.12 mm, all selected metrics changed
+by at most 2.02\%, while cell count increased by 92\% and solver execution time
+by 157\%. The 0.12 mm case also failed residual control at 2000 iterations,
+whereas 0.15 mm converged in 1611. With a practical 2.5\% acceptance threshold,
+the 0.15 mm mesh is selected as the optimal balance between apparent spatial
+convergence and computational efficiency.
 
 \subsection{Constant-diameter resistance during inspiration}
 
-[For fully developed laminar flow in a rigid constant-diameter tube,
-$\Delta P=RQ$ and the Poiseuille resistance is independent of flow rate.
-Therefore an increasing inspiratory flow produces a proportional pressure drop
-but constant $R=\Delta P/Q$. Discuss why developing flow, inertia, geometry,
-separation, or transition can make the computed airway resistance depart from
-this idealisation.]
+For fully developed laminar flow in a rigid constant-diameter tube,
+Poiseuille's law gives $\Delta P=128\mu LQ/(\pi D^4)=RQ$. Geometry and fluid
+properties are constant, so increasing inspiratory flow produces a proportional
+pressure drop while $R=\Delta P/Q$ remains constant. Patient-specific curvature,
+developing flow, bifurcation, separation, and inertial losses can instead make
+pressure drop nonlinear in flow. Transient inertia can also create phase
+differences between pressure and flow, so instantaneous resistance need not
+remain constant.
 
 \subsection{Limitations}
 
@@ -930,11 +992,13 @@ Potential limitations include:
   \item analysis of a limited number of anatomical cases.
 \end{itemize}
 
-With additional resources, the mesh study should include at least three
-systematically refined grids, local refinement around the stenosis and branch
-junctions, boundary-layer prism elements, and a formal convergence measure such
-as the grid-convergence index. A temporal-resolution study should likewise be
-performed for the transient model.
+With additional resources, refinement should focus locally on the matched
+tracheal region, carina, and small right-superior branch rather than reducing
+global size uniformly. All cases should first meet residual and monitored-integral
+criteria. Additional levels around the apparent asymptotic range, consistently
+generated prism layers, Richardson extrapolation, and a grid-convergence index
+would strengthen numerical uncertainty estimates. Runtime, memory, mesh quality,
+and section-area variation should be tracked alongside each physical metric.
 
 \subsection{Handling transient non-convergence}
 
