@@ -12,7 +12,7 @@ project_path = pathlib.Path("/home/hvoverme/tracheomalacia_cfd/")
 # The only user-selected case switch in the Slicer pipeline. This script tags
 # AirwayLungSegmentation with AirwayCase; all downstream scripts read that tag.
 
-CASE = "postop"
+CASE = "preop"
 
 source_folder = project_path / "segmentation" / "source" / f"DICOM_{CASE}"
 

@@ -82,13 +82,15 @@
   \begin{tabular}{rl}
     \textbf{Author:} & \reportauthor \\
     \textbf{Date:}   & \reportdate \\
-    \textbf{Repository:} & \texttt{tracheomalacia\_cfd}
+    \textbf{Repository:} &
+    \href{https://github.com/henrivanovermeire/tracheomalacia_cfd/settings}
+    {\texttt{github.com/henrivanovermeire/tracheomalacia\_cfd}}
   \end{tabular}
 
   \vfill
 
-  \textit{Template report---replace bracketed text and placeholder figures with
-  final methods, results, and interpretations.}
+  \textit{Reproducible project report; analyses still in progress are identified
+  explicitly in the text.}
 \end{titlepage}
 
 \hypersetup{pageanchor=true}
@@ -108,8 +110,16 @@ closed with planar caps. Tetrahedral volume meshes are generated with Gmsh and
 steady incompressible airflow is solved using OpenFOAM. This report documents
 the reproducible processing pipeline, evaluates mesh quality and mesh
 independence, and compares clinically relevant flow quantities between the
-preoperative and postoperative geometries. [Complete this abstract with the
-principal numerical findings and conclusions.]
+preoperative and postoperative geometries. The preoperative minimum lumen area
+was \SI{1.813}{\milli\metre\squared}, compared with
+\SI{5.169}{\milli\metre\squared} at the matched postoperative location, giving
+an area constriction of 64.9\%. In the steady postoperative model the local
+pressure drop was \SI{30.95}{\pascal}, the resistance was
+\SI{15.41}{\pascal\per\litre\per\minute}, and 73.2\% of outlet flow entered the
+right lung. A four-level HXT mesh study selected the \num{0.15}~mm mesh because
+its reported metrics differed by no more than 2.02\% from the denser mesh while
+using 48\% fewer cells. A complete-cycle transient calculation is configured;
+its final phase-resolved results are reported only after solver completion.
 \end{abstract}
 
 \tableofcontents
@@ -305,10 +315,31 @@ silently overwriting one another.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: segmentation and final clipped/extended airway surface}}
-  \caption{Airway segmentation and CFD-ready surface. Add representative
-  preoperative and postoperative views with consistent orientation.}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{preop_segmentation.png}
+    \caption{Preoperative cleaned airway segmentation.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{postop_segmentation.png}
+    \caption{Postoperative airway segmentation.}
+  \end{subfigure}
+
+  \vspace{0.5em}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{preop_cfd_surface.png}
+    \caption{Preoperative clipped, extended, and capped surface.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{postop_cfd_surface.png}
+    \caption{Postoperative clipped, extended, and capped surface.}
+  \end{subfigure}
+  \caption{Case-specific airway preparation in anatomical frontal view. The top
+  row shows the live Slicer segmentations; the bottom row shows the final CFD
+  surfaces with centerline-directed flow extensions and planar caps.}
   \label{fig:segmentation}
 \end{figure}
 
@@ -346,8 +377,7 @@ minimum-Feret-diameter reduction is 65.2\% and is reported as
 
 \begin{table}[htbp]
   \centering
-  \caption{Anatomical measurements used to quantify the preoperative
-  constriction. Replace placeholders with measurements from centerline-normal
+  \caption{Anatomical measurements obtained from centerline-normal lumen
   sections in 3D Slicer.}
   \label{tab:anatomical_measurements}
   \begin{tabular}{@{}lll@{}}
@@ -367,14 +397,34 @@ minimum-Feret-diameter reduction is 65.2\% and is reported as
   \end{tabular}
 \end{table}
 
+The measured dimensions are consistent with the scale reported in paediatric
+tracheal-surgery literature. Arcieri et al. described 25 children with congenital
+tracheal stenosis and reported a mean internal diameter of
+\SI{1.5}{\milli\metre}; the cohort had a median operative age of seven months and
+median weight of \SI{5.2}{\kilogram} \cite{arcieri2018}. This closely matches the
+\SI{1.519}{\milli\metre} preoperative equivalent diameter obtained here. The
+smaller minimum Feret diameter of \SI{0.798}{\milli\metre} is not contradictory:
+it characterises the narrowest caliper dimension of a non-circular lumen, whereas
+the equivalent diameter is derived from total cross-sectional area. The
+literature comparison supports dimensional plausibility but is not an independent
+validation of the patient-specific segmentation or landmark placement.
+
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: matched preoperative and postoperative 3D reconstructions with
-    constriction length and cross-sectional measurements}}
-  \caption{Measurement of constriction length and minimum lumen section in the
-  preoperative geometry, with the corresponding postoperative section at the
-  same anatomical location.}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{preop_stenosis_measurement.png}
+    \caption{Preoperative stenosis path and minimum section.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{postop_matched_section.png}
+    \caption{Mapped postoperative comparison section.}
+  \end{subfigure}
+  \caption{Centerline-based anatomical correspondence. Orange curves show the
+  measured tracheal interval and magenta contours identify the preoperative
+  minimum and corresponding postoperative lumen sections. The postoperative
+  location is mapped using 76.53\% of inlet-to-carina centerline distance.}
   \label{fig:anatomical_measurements}
 \end{figure}
 
@@ -456,10 +506,35 @@ SI units.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: surface and cutaway views of baseline and fine meshes}}
-  \caption{Computational meshes. Include a close-up in the stenotic region to
-  demonstrate the change in resolution.}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{assignment5_mesh_025_full.png}
+    \caption{0.25 mm HXT baseline; 180,163 volume cells.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{assignment5_mesh_015_full.png}
+    \caption{Selected 0.15 mm HXT mesh; 776,568 volume cells.}
+  \end{subfigure}
+
+  \vspace{0.5em}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{assignment5_mesh_025_closeup.png}
+    \caption{Baseline surface triangulation at the carina.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{assignment5_mesh_015_closeup.png}
+    \caption{Selected-mesh surface triangulation at the carina.}
+  \end{subfigure}
+  \caption{Postoperative HXT mesh refinement in matched anatomical frontal
+  views. The complete baseline and selected meshes are shown above, with
+  identically framed carina close-ups below. Both levels use the same geometry,
+  physical surface groups, and HXT algorithm; only target characteristic length
+  differs. Surface-edge density illustrates refinement, while quantitative
+  volume-mesh sensitivity is assessed separately in
+  Section~\ref{sec:mesh_sensitivity}.}
   \label{fig:meshes}
 \end{figure}
 
@@ -504,10 +579,19 @@ A prescribed volumetric flow rate is applied at the tracheal inlet:
 \end{equation}
 
 This corresponds to approximately \SI{2}{\litre\per\minute}, representative
-of the stated minute volume for a 10-month-old infant. A no-slip
-condition is applied at the airway wall. The three outlets use zero reference
-pressure with pressure-compatible velocity conditions. Table~\ref{tab:bc}
-summarises the implementation.
+of the stated minute volume for a 10-month-old infant. A no-slip condition is
+applied at the airway wall. The three distal outlets use the same zero gauge
+pressure with pressure-compatible velocity conditions. No outlet flow fraction
+is prescribed; consequently, the flow division is an output of the CFD solution.
+For a common downstream pressure, each pathway behaves approximately as
+
+\begin{equation}
+  Q_i \sim \frac{\Delta P}{R_i},
+\end{equation}
+
+where differences in effective resistance $R_i$ arise from features such as
+branch diameter, length, branching angle, curvature, and flow separation.
+Table~\ref{tab:bc} summarises the implementation.
 
 \begin{table}[htbp]
   \centering
@@ -641,17 +725,44 @@ $\mathrm{Ma}=0.1$ compressibility threshold.
 
 \subsection{Mesh quality}
 
-For each case and resolution, report the complete \texttt{checkMesh} summary.
-Particular attention should be paid to:
+Table~\ref{tab:mesh_quality} summarises the principal \texttt{checkMesh}
+metrics for the four postoperative HXT meshes. All meshes contained one
+connected fluid region. A face was counted as severely non-orthogonal when its
+non-orthogonality exceeded $70^\circ$.
 
-\begin{itemize}
-  \item maximum non-orthogonality;
-  \item number of severely non-orthogonal faces;
-  \item maximum skewness;
-  \item minimum cell volume;
-  \item maximum aspect ratio; and
-  \item number of disconnected regions.
-\end{itemize}
+\begin{table}[htbp]
+  \centering
+  \caption{Postoperative HXT mesh-quality metrics reported by
+  \texttt{checkMesh}. The minimum cell volumes are given after conversion of
+  the geometry from millimetres to metres.}
+  \label{tab:mesh_quality}
+  \resizebox{\textwidth}{!}{%
+  \begin{tabular}{@{}lrrrrrr@{}}
+    \toprule
+    Target size & Max. aspect ratio & Max. non-orthogonality & Severe faces & Max. skewness & Min. volume (\si{\metre\cubed}) & Regions \\
+    \midrule
+    \SI{0.25}{\milli\metre} & 114.14 & $88.63^\circ$ & 2  & 1.457 & $7.90\times10^{-15}$ & 1 \\
+    \SI{0.20}{\milli\metre} & 11.73  & $80.29^\circ$ & 2  & 1.268 & $3.64\times10^{-14}$ & 1 \\
+    \SI{0.15}{\milli\metre} & 12.63  & $69.82^\circ$ & 0  & 1.196 & $5.12\times10^{-14}$ & 1 \\
+    \SI{0.12}{\milli\metre} & 88.00  & $82.34^\circ$ & 19 & 1.396 & $8.71\times10^{-16}$ & 1 \\
+    \bottomrule
+  \end{tabular}%
+  }
+\end{table}
+
+The \SI{0.15}{\milli\metre} mesh had the strongest overall quality: its maximum
+non-orthogonality remained below $70^\circ$, it contained no severely
+non-orthogonal faces, and it had the lowest maximum skewness of the series. Its
+maximum aspect ratio of 12.63 was also substantially lower than those of the
+\SI{0.25}{\milli\metre} and \SI{0.12}{\milli\metre} meshes. Refining the target
+size did not improve every quality measure monotonically. In particular, the
+\SI{0.12}{\milli\metre} mesh introduced 19 severely non-orthogonal faces, a
+maximum aspect ratio of 88.00, and the smallest cell volume in the series. This
+local deterioration is consistent with its poorer solver convergence and shows
+why cell count alone is not a sufficient mesh-selection criterion. Nevertheless,
+all four meshes remained single connected domains and their maximum skewness was
+below the OpenFOAM internal-cell warning limit of 4. The quality results therefore
+support selection of the \SI{0.15}{\milli\metre} mesh for the final analysis.
 
 \subsection{Convergence and mass conservation}
 
@@ -701,6 +812,7 @@ after continuation without reinitialising the solution.
 \end{table}
 
 \subsection{Mesh-independence assessment}
+\label{sec:mesh_sensitivity}
 
 At least three postoperative mesh levels are preferred so that a trend can be
 assessed rather than only a pairwise difference. Each parameter of interest is
@@ -807,9 +919,18 @@ area-averaged plane pressures rather than centerline point samples.
 
 Outlet flow was obtained by integrating outward-normal volumetric flux over each
 patch. The right superior and inferior lobar outlets were grouped as the right
-lung; the left main bronchus formed the left group. With identical zero gauge
-pressure at all outlets, the resulting unequal split reflects the resolved
-geometric and hydraulic resistance of the branches.
+lung; the left main bronchus formed the left group. The primary left/right result
+was
+
+\begin{equation}
+  Q_R = 73.17\%, \qquad Q_L = 26.83\%.
+\end{equation}
+
+The individual outlet values in Table~\ref{tab:outlet_flow} provide the supporting
+lobar decomposition. Because identical zero gauge pressure was imposed at all
+outlets, no 73/27 split was prescribed. The unequal distribution instead reflects
+the geometric and hydraulic resistance of the branches resolved within the
+truncated airway domain.
 
 \begin{table}[htbp]
   \centering
@@ -866,11 +987,12 @@ velocities were \SI{6.53}{\metre\per\second} and
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: postoperative geometry with upstream and downstream resistance
-    planes visibly indicated}}
-  \caption{Fixed pre-bifurcation section used to calculate steady and transient
-  local resistance. Plane origins and normals must be archived for reuse.}
+  \includegraphics[width=0.76\textwidth]{assignment4_resistance_planes.png}
+  \caption{Fixed centerline-normal planes delimiting the postoperative matched
+  tracheal region. The blue superior plane is the upstream pressure section and
+  the orange inferior plane is the downstream section. Their origins and normals
+  are archived in a versioned JSON definition and reused unchanged for steady,
+  mesh-sensitivity, and transient analyses.}
   \label{fig:resistance_section}
 \end{figure}
 
@@ -882,11 +1004,11 @@ velocities were \SI{6.53}{\metre\per\second} and
     \toprule
     Quantity & Value \\
     \midrule
-    Upstream area-averaged pressure & [insert] \\
-    Downstream area-averaged pressure & [insert] \\
-    Pressure difference $\Delta P$ & [insert] \si{\pascal} \\
-    Volumetric flow $Q$ & [insert] \si{\metre\cubed\per\second} \\
-    Resistance $R=\Delta P/Q$ & [insert] \si{\pascal\second\per\metre\cubed} \\
+    Upstream area-averaged kinematic pressure & 53.695 \si{\metre\squared\per\second\squared} \\
+    Downstream area-averaged kinematic pressure & 27.993 \si{\metre\squared\per\second\squared} \\
+    Pressure difference $\Delta P$ & 30.945 \si{\pascal} \\
+    Volumetric flow $Q$ & \num{3.347e-5} \si{\metre\cubed\per\second} \\
+    Resistance $R=\Delta P/Q$ & \num{9.247e5} \si{\pascal\second\per\metre\cubed} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -897,9 +1019,15 @@ velocities were \SI{6.53}{\metre\per\second} and
 
 \subsection{Time-step convergence}
 
-[Plot residual evolution by time step, state the convergence criterion, and
-identify every time step that failed to meet it. Also report the maximum Courant
-number and whether the final simulated cycle is periodic.]
+At the time of report assembly, the full \SI{2}{\second} calculation on the
+selected \num{0.15}~mm HXT mesh was running on 48 MPI ranks. Startup tests showed
+that adaptive stepping maintained the maximum Courant number close to the target
+of 2 while the mean remained substantially lower. Final linear-solver residuals
+were typically of order $10^{-9}$ and final global continuity errors of order
+$10^{-12}$. Some startup steps did not satisfy the configured outer PIMPLE
+criterion within three correctors. The final log must therefore be parsed before
+claiming complete time-step convergence or periodicity; no incomplete transient
+quantity is substituted by extrapolation.
 
 \begin{figure}[htbp]
   \centering
@@ -950,10 +1078,29 @@ constant-diameter expectation and with a qualitative preoperative sketch.
 \section{Discussion}
 \label{sec:discussion}
 
-[Interpret the numerical results in relation to the anatomical differences and
-clinical question. Discuss whether pressure losses, velocity peaks, or outlet
-flow distributions improve after intervention. Distinguish numerical evidence
-from physiological inference.]
+\subsection{Interpretation of outlet conditions and lung-flow split}
+
+Applying the same static pressure at every distal outlet deliberately leaves the
+left/right flow division unconstrained, making it an output of the reconstructed
+geometry rather than an imposed boundary-condition ratio. The predicted
+73.17\% right and 26.83\% left distribution is therefore a defensible measure of
+the relative aerodynamic resistance of the resolved postoperative branches.
+Differences in calibre, pathway length, branching angle, curvature, and local
+flow separation can all contribute to the unequal result.
+
+This distribution should not, however, be interpreted as the child's measured
+physiological lung ventilation. The model ends at truncated bronchial outlets and
+therefore excludes the resistance of unresolved peripheral airways and the
+compliance of the distal lungs. A more physiologically detailed extension could
+apply distal resistance conditions such as
+
+\begin{equation}
+  P_i = P_{\mathrm{alv}} + R_i Q_i,
+\end{equation}
+
+or coupled resistance--compliance outlet models. Such conditions would preserve
+an emergent flow split while representing peripheral lung mechanics, provided
+that patient-specific parameters were available.
 
 \subsection{Mesh sensitivity and optimal mesh}
 
@@ -1038,6 +1185,13 @@ S.~Taherian, H.~Rahai, B.~Gomez, T.~Waddington, and F.~Mazdisnian,
 collapse,''
 \textit{Clinical Biomechanics}, vol.~50, pp.~145--153, 2017.
 \url{https://doi.org/10.1016/j.clinbiomech.2017.10.018}.
+
+\bibitem{arcieri2018}
+L.~Arcieri, V.~Pak, V.~Poli, R.~Baggi, P.~Serio, N.~Assanta, R.~Moschetti,
+B.~Noccioli, S.~De Masi, L.~Mirabile, and B.~Murzi,
+``Tracheal surgery in children: outcome of a 12-year survey,''
+\textit{Interactive CardioVascular and Thoracic Surgery}, vol.~26, no.~4,
+pp.~660--666, 2018.
 
 \bibitem{openfoam}
 OpenCFD Ltd.,

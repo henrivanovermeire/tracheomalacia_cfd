@@ -27,8 +27,8 @@
             "display": {
                 "visibility": true,
                 "opacity": 1.0,
-                "color": [0.4, 1.0, 1.0],
-                "selectedColor": [1.0, 0.5000076295109483, 0.5000076295109483],
+                "color": [1.0, 0.0, 1.0],
+                "selectedColor": [1.0, 0.0, 1.0],
                 "activeColor": [0.4, 1.0, 0.0],
                 "propertiesLabelVisibility": false,
                 "pointLabelsVisibility": true,
