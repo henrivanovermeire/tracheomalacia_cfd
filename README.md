@@ -140,4 +140,4 @@ per minute, and a symmetric 2 s sinusoid. Set `NPROCS` (default 48),
 
 See [`WORKFLOW.md`](WORKFLOW.md) for installation instructions, the complete
 Slicer-to-ParaView procedure, physical-boundary verification, remote execution,
-and mesh-independence guidance.
+and mesh-sensitivity guidance.

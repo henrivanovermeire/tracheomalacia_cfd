@@ -14,16 +14,15 @@ centerline-directed flow extensions; planar caps produced CFD-ready surfaces.
 The preoperative constriction measured **12.16 mm** along the centerline. Its
 minimum centerline-normal section had area **1.813 mm²**, minimum Feret diameter
 **0.798 mm**, and area-equivalent diameter **1.519 mm**, where
-\(D_{eq}=2\sqrt{A/\pi}\). The matched postoperative section was placed at the
-same normalized inlet-to-carina centerline position (76.53% from the inlet);
-its area, minimum Feret diameter, and equivalent diameter were **5.169 mm²**,
-**2.292 mm**, and **2.565 mm**, respectively. Area constriction was calculated
-as \(C_A=(1-A_{pre}/A_{post})\times100=64.9\%\). Area reduction
-was selected because continuity depends directly on lumen area and the strongly
-non-circular preoperative section is poorly represented by one diameter.
-
-**Figures still required:** annotated preoperative and postoperative 3D
-reconstructions showing constriction length and both measurement sections.
+\(D_{eq}=2\sqrt{A/\pi}\). The postoperative comparison section was placed at the same normalized
+inlet-to-carina centerline position (76.53% from the inlet); its area, minimum
+Feret diameter, and equivalent diameter were **5.169 mm²**, **2.292 mm**, and
+**2.565 mm**, respectively. The cross-scan preoperative area deficit was
+calculated as \(C_A=(1-A_{pre}/A_{post})\times100=64.9\%\). This is not a
+conventional within-scan stenosis severity. Area was selected because continuity
+depends directly on lumen area and the strongly non-circular preoperative section
+is poorly represented by one diameter. Normalized position does not prove exact
+anatomical homology after surgery.
 
 ## Flow behaviour
 
@@ -47,16 +46,16 @@ planes and integrate normal velocity to obtain flow rate. The local resistance
 is \(R=(\bar P_{up}-\bar P_{down})/Q\); plane locations must exclude unrelated
 branch losses.
 
-## Remaining measured inputs
+## Recorded measured inputs
 
-| Placeholder | Required value |
+| Quantity | Recorded value |
 |---|---|
 | `L_pre` | 12.157 mm preoperative constriction centerline length |
 | `A_pre,min` | 1.813 mm² preoperative minimum cross-sectional area |
 | `D_pre,Feret` | 0.798 mm preoperative minimum Feret diameter |
 | `D_pre,eq` | 1.519 mm preoperative area-equivalent diameter |
-| `A_post,matched` | 5.169 mm² matched postoperative area |
-| `D_post,Feret` | 2.292 mm matched postoperative minimum Feret diameter |
-| `D_post,eq` | 2.565 mm matched postoperative equivalent diameter |
-| `C_A` | 64.9% area constriction |
-| `C_D,Feret` | 65.2% minimum Feret diameter reduction |
+| `A_post,matched` | 5.169 mm² normalized centerline-matched postoperative area |
+| `D_post,Feret` | 2.292 mm postoperative comparison minimum Feret diameter |
+| `D_post,eq` | 2.565 mm postoperative comparison equivalent diameter |
+| `C_A` | 64.9% cross-scan preoperative area deficit |
+| `C_D,Feret` | 65.2% cross-scan minimum-Feret deficit |

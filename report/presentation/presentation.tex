@@ -69,10 +69,11 @@
   \centering
   \large
   \begin{block}{Image to result}
-    DICOM $\rightarrow$ 3D Slicer/SlicerVMTK $\rightarrow$ capped STL
-    $\rightarrow$ Gmsh $\rightarrow$ OpenFOAM $\rightarrow$ ParaView
+    DICOM $\rightarrow$ \href{https://www.slicer.org/}{3D Slicer}/SlicerVMTK $\rightarrow$ capped STL
+    $\rightarrow$ \href{https://gmsh.info/}{Gmsh} $\rightarrow$
+    \href{https://www.openfoam.com/}{OpenFOAM} $\rightarrow$ ParaView
   \end{block}
-  \vspace{0.5em}
+  \vspace{0.3em}
   \begin{columns}[T,onlytextwidth]
     \column{0.48\textwidth}
       \textbf{Geometry preparation}
@@ -89,6 +90,152 @@
         \item Transient postoperative \texttt{pimpleFoam} PoC
       \end{itemize}
   \end{columns}
+  \vspace{0.15em}
+  \centering\scriptsize
+  \href{https://github.com/henrivanovermeire/tracheomalacia_cfd}{\texttt{github.com/henrivanovermeire/tracheomalacia\_cfd}}\quad
+  \href{https://www.slicer.org/}{\texttt{slicer.org}}\quad
+  \href{https://gmsh.info/}{\texttt{gmsh.info}}\quad
+  \href{https://www.openfoam.com/}{\texttt{openfoam.com}}
+\end{frame}
+
+\begin{frame}{Scripted approach for optimal reproducibility}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.52\textwidth}
+      \begin{itemize}
+        \item Repeated processing steps were implemented as version-controlled scripts instead of undocumented manual actions.
+        \item Case generation fixes patch names, units, fluid properties, boundary conditions, numerical schemes, and decomposition settings.
+        \item Post-processing scripts extract residuals, conservative patch flows, pressure loss, resistance, mesh sensitivity, and transient convergence.
+        \item Figure generators use fixed views, scales, sample density, and reporting locations.
+      \end{itemize}
+    \column{0.45\textwidth}
+      \begin{block}{Traceable chain}
+        Source DICOM and settings
+        $\downarrow$
+
+        Segmentation and mesh scripts
+        $\downarrow$
+
+        OpenFOAM case dictionaries
+        $\downarrow$
+
+        Machine-readable CSV/JSON
+        $\downarrow$
+
+        Report figures and PDFs
+      \end{block}
+  \end{columns}
+  \centering\scriptsize Scripts and documentation: \href{https://github.com/henrivanovermeire/tracheomalacia_cfd}{\texttt{github.com/henrivanovermeire/tracheomalacia\_cfd}}
+\end{frame}
+
+\begin{frame}{3D Slicer: CT to airway geometry}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.57\textwidth}
+      \begin{itemize}
+        \item Open-source platform for medical-image visualisation, segmentation, and quantitative analysis.
+        \item CT voxels were selected using connected intensity thresholding:
+          \begin{itemize}
+            \item preoperative: $-1500$ to $-300$ HU;
+            \item postoperative: $-1500$ to $-650$ HU.
+          \end{itemize}
+        \item Incorrectly included lung air was removed manually.
+        \item SlicerVMTK centerlines supported centerline-normal measurements and anatomically directed flow extensions.
+        \item Planar caps produced closed, CFD-ready STL surfaces.
+      \end{itemize}
+    \column{0.40\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.66\textheight,keepaspectratio]{preop_segmentation.png}
+  \end{columns}
+  \vspace{-0.2em}
+  \centering\scriptsize Geometry is patient-specific, but segmentation and unknown CT respiratory phase remain sources of uncertainty.
+\end{frame}
+
+\begin{frame}{Gmsh: surface to finite-volume mesh}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.54\textwidth}
+      \begin{itemize}
+        \item Open-source mesh generator used to convert each closed airway STL into a three-dimensional tetrahedral volume mesh.
+        \item Named physical groups preserve the CFD boundaries:
+          \texttt{inlet}, \texttt{outlet\_1--3}, and \texttt{wall}.
+        \item HXT meshes were generated at target sizes of 0.25, 0.20, 0.15, and 0.12 mm.
+        \item Meshes were imported with \texttt{gmshToFoam}, scaled from millimetres to metres, and verified using \texttt{checkMesh}.
+      \end{itemize}
+      \begin{block}{Selected steady mesh}
+        0.15 mm HXT: 776,568 tetrahedra; best observed accuracy--cost compromise.
+      \end{block}
+    \column{0.43\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.67\textheight,keepaspectratio]{assignment5_mesh_015_closeup.png}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{OpenFOAM: the CFD toolbox}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.55\textwidth}
+      \begin{itemize}
+        \item Open-source finite-volume toolbox for solving conservation equations on general polyhedral meshes.
+        \item Pressure and velocity are solved as coupled physics using segregated algebraic equations.
+        \item Incompressible pressure is kinematic: $p=P/\rho$; reported pressure differences use $\Delta P=\rho\,\Delta p$.
+        \item Cases were decomposed with Scotch and solved in parallel using MPI.
+      \end{itemize}
+    \column{0.42\textwidth}
+      \begin{block}{Case organisation}
+        \texttt{0/}: $U$, $p$, initial and boundary conditions
+
+        \medskip
+        \texttt{constant/}: \texttt{polyMesh}, viscosity, flow model
+
+        \medskip
+        \texttt{system/}: \texttt{controlDict}, \texttt{fvSchemes}, \texttt{fvSolution}, decomposition
+      \end{block}
+  \end{columns}
+  \vspace{0.2em}
+  \centering\small The same directory structure supported both steady and transient airway simulations.
+\end{frame}
+
+\begin{frame}{Remote computation and DevOps workflow}
+  \small
+  \begin{columns}[T,onlytextwidth]
+    \column{0.55\textwidth}
+      \begin{itemize}
+        \item Local workstation: segmentation, case preparation, post-processing, reporting, and Git version control.
+        \item Remote high-performance compute VM: CPU-intensive meshing and OpenFOAM execution.
+        \item Scripted SSH/\texttt{rsync} transfers moved cases to the VM and retrieved results.
+        \item Docker supplied OpenFOAM 2512; MPI distributed decomposed domains and \texttt{reconstructPar} reassembled the fields.
+      \end{itemize}
+    \column{0.42\textwidth}
+      \begin{block}{Execution pipeline}
+        Git-tracked case $\rightarrow$ SSH transfer
+
+        $\rightarrow$ Docker $\rightarrow$ \texttt{decomposePar}
+
+        $\rightarrow$ MPI solver $\rightarrow$ \texttt{reconstructPar}
+
+        $\rightarrow$ result retrieval
+      \end{block}
+  \end{columns}
+  \begin{alertblock}{Provenance limitation}
+    \scriptsize OpenFOAM 2512 and the case files are retained, but the historical Docker digest was not archived; the mutable \texttt{latest} tag prevents bit-for-bit environment reproduction.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Solvers used: \texttt{simpleFoam} and \texttt{pimpleFoam}}
+  \small
+  \begin{tabular}{@{}p{0.18\textwidth}p{0.37\textwidth}p{0.37\textwidth}@{}}
+    \toprule
+    & \textbf{\texttt{simpleFoam}} & \textbf{\texttt{pimpleFoam}} \\
+    \midrule
+    Purpose & Steady incompressible flow & Transient incompressible flow \\
+    Coupling & SIMPLE pressure--velocity iterations & PIMPLE: SIMPLE-like outer loops with PISO-like pressure correctors \\
+    Time & Iterations are not physical time & Advances through physical timesteps \\
+    Stability & Under-relaxation between iterations & Adaptive $\Delta t$ with a Courant limit \\
+    This study & Final steady result on 0.15 mm HXT mesh & One postoperative cycle on 0.25 mm HXT mesh \\
+    Outcome & Converged at iteration 1611 & 99.826\% of timesteps met the outer criterion \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.6em}
+  \begin{alertblock}{Interpretation}
+    Algebraic convergence controls equation-solution error; it does not by itself establish mesh or timestep independence.
+  \end{alertblock}
 \end{frame}
 
 \begin{frame}{Patient-specific airway reconstruction}
@@ -106,7 +253,7 @@
   \centering\small The preoperative stenosis was preserved during segmentation and manually separated from included lung air.
 \end{frame}
 
-\begin{frame}{Intervention increased the matched lumen area}
+\begin{frame}{Normalized centerline-based pre/post comparison}
   \begin{columns}[T,onlytextwidth]
     \column{0.47\textwidth}
       \includegraphics[width=\linewidth,height=0.46\textheight,keepaspectratio]{preop_stenosis_measurement.png}
@@ -127,7 +274,8 @@
     \end{tabular}
   \end{center}
   \vspace{-0.5em}
-  \centering\small\alert{Area constriction: 64.9\%; minimum-Feret reduction: 65.2\%.}
+  \centering\small\alert{Preoperative deficit relative to postoperative section: 64.9\% by area; 65.2\% by minimum Feret diameter.}\\
+  \scriptsize This is a cross-scan comparison, not conventional within-scan stenosis severity.
 \end{frame}
 
 \begin{frame}{Mesh generation and verification}
@@ -152,7 +300,7 @@
   \includegraphics[width=0.86\linewidth,height=0.72\textheight,keepaspectratio]{assignment5_mesh_metrics.pdf}
   \vspace{-0.2em}
 
-  \small From 0.15 to 0.12 mm, selected metrics changed by at most 2.02\%, while cell count increased by 92\% and solver time by 157\%.
+  \small From 0.15 to the unconverged 0.12 mm comparison, monitored values changed by at most 1.83\%, while cell count increased by 92\% and solver execution time by 157\%. This suggests an apparent sensitivity plateau, not proven mesh independence.
 \end{frame}
 
 \begin{frame}{Steady postoperative airflow}
@@ -167,7 +315,7 @@
       \includegraphics[width=\linewidth,height=0.60\textheight,keepaspectratio]{assignment4_pressure_distribution.png}
   \end{columns}
   \vspace{0.2em}
-  \centering\small At \SI{2}{\litre\per\minute}: $\Delta P=\SI{30.95}{\pascal}$, local resistance $=\SI{15.41}{\pascal\per\litre\per\minute}$, peak velocity $=\SI{9.25}{\metre\per\second}$.
+  \centering\small Selected 0.15 mm HXT mesh at \SI{2}{\litre\per\minute}: $\Delta P=\SI{35.21}{\pascal}$, conservative-flux resistance $=\SI{17.61}{\pascal\per\litre\per\minute}$, peak velocity $=\SI{9.67}{\metre\per\second}$.
 \end{frame}
 
 \begin{frame}{Flow distribution emerges from geometry}
@@ -175,8 +323,8 @@
     \column{0.48\textwidth}
       \begin{block}{Computed distribution}
         \centering\Huge
-        $Q_R=73.17\%$\\[0.4em]
-        $Q_L=26.83\%$
+        $Q_R=73.69\%$\\[0.4em]
+        $Q_L=26.31\%$
       \end{block}
     \column{0.48\textwidth}
       \begin{itemize}
@@ -235,8 +383,8 @@
     \column{0.52\textwidth}
       \textbf{Principal findings}
       \begin{itemize}
-        \item Surgery increased matched area from 1.813 to \SI{5.169}{\milli\metre\squared}.
-        \item The postoperative model produced a marked geometry-driven 73/27 right/left split.
+        \item The preoperative area was 64.9\% below the normalized centerline-matched postoperative section; respiratory phase was not recorded.
+        \item The selected-mesh model produced a geometry-driven 73.69/26.31\% right/left split.
         \item The 0.15 mm mesh balanced sensitivity and computational cost for steady CFD.
         \item The transient workflow resolves the imposed breathing phases as a PoC.
       \end{itemize}

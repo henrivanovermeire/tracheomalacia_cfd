@@ -7,15 +7,15 @@ set xlabel "Number of volume cells"
 set format x "%.1t$\\times10^{%T}$"
 set ylabel "Resistance (Pa/(L/min))"
 set title "Resistance (Pa/(L/min))"
-plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:13 every ::1 with linespoints lw 2 pt 7 notitle
+plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:14 every ::1 with linespoints lw 2 pt 7 notitle
 set ylabel "Right-lung flow fraction (\\%)"
 set title "Right-lung flow fraction (\\%)"
-plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:16 every ::1 with linespoints lw 2 pt 7 notitle
+plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:17 every ::1 with linespoints lw 2 pt 7 notitle
 set ylabel "Right-superior share of right flow (\\%)"
 set title "Right-superior share of right flow (\\%)"
-plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:18 every ::1 with linespoints lw 2 pt 7 notitle
+plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:19 every ::1 with linespoints lw 2 pt 7 notitle
 set ylabel "Matched-section peak velocity (m/s)"
 set title "Matched-section peak velocity (m/s)"
-plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:15 every ::1 with linespoints lw 2 pt 7 notitle
+plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/mesh_sensitivity.csv" using 3:16 every ::1 with linespoints lw 2 pt 7 notitle
 unset multiplot
 unset output

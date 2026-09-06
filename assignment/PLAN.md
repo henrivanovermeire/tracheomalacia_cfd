@@ -180,18 +180,19 @@ D_eq = 2 sqrt(A / π)
 - [x] Documented the normalized centerline correspondence and mapped both
       stenosis endpoints for visual verification.
 
-## 3.6 Calculate constriction
+## 3.6 Calculate the cross-scan deficit
 
 Calculated and retained both:
 
 ```text
-Area constriction = (1 - A_pre,min / A_post,matched) × 100%
-Diameter reduction = (1 - D_pre,min / D_post,matched) × 100%
+Cross-scan area deficit = (1 - A_pre,min / A_post,matched) × 100%
+Cross-scan minimum-Feret deficit = (1 - D_pre,min / D_post,matched) × 100%
 ```
 
-The resulting area constriction is 64.9%; minimum-Feret-diameter reduction is
-65.2%. Area constriction is the primary result because it directly represents
-loss of flow area in the non-circular lumen.
+The resulting cross-scan area and minimum-Feret deficits are 64.9% and 65.2%.
+Area is the primary comparison because it directly represents flow area in the
+non-circular lumen. These are not conventional within-scan stenosis severities,
+and normalized centerline correspondence does not prove anatomical homology.
 
 ## Required outputs
 
@@ -388,8 +389,8 @@ Optional secondary parameters:
 
 ## 5.6 Choose the optimal mesh
 
-- [x] Selected the 0.15 mm mesh: all selected differences are ≤2.02% relative
-      to the denser result.
+- [x] Selected the 0.15 mm mesh: all selected differences are ≤1.83% relative
+      to the denser result, interpreted as sensitivity rather than proof of mesh independence.
 - [x] Compared gain with the 92% cell-count and 157% runtime increase at 0.12 mm.
 - [x] Documented that the densest case was not residually converged and therefore
       is not treated as a truth solution.
@@ -452,15 +453,16 @@ assignment/data/breathing_waveform.csv
 
 - [x] Reject the original `maxCo=1` setup after it forced `deltaT` below 1e-5 s
       by t=0.0099 s while the mean Courant number remained below 0.08.
-- [x] Configure a 0--0.05 s timing mode with `maxCo=2`, maximum `deltaT=5e-5 s`,
-      and transient outer-loop criteria distinct from the tight linear tolerances.
-- [ ] Complete and analyse the timing diagnostic.
-- [ ] Run the 0--0.55 s pilot through peak inspiratory flow.
-- [x] Monitor early maximum Courant behavior; revised run holds max Co near 2.02.
-- [ ] Check convergence within every time step over the completed timing run.
-- [x] Adjust outer stopping criteria to p=1e-2 and U=2e-3 while retaining
-      1e-8 linear-equation tolerances.
-- [ ] Compare at least two time steps for one key transient quantity.
+- [x] Complete the final 0--2 s coarse-grid run with adaptive stepping,
+      `maxCo=5`, and maximum `deltaT=2e-4 s`.
+- [x] Parse the full solver log: 354,399 of 355,016 steps met the outer PIMPLE
+      criterion; the 617 misses clustered near startup and flow reversals.
+- [x] Record observed Courant and timestep ranges: maximum Co 5.296 and
+      `deltaT=3.287e-6`--`2.019e-4 s`.
+- [x] Retain tight linear-equation tolerances while using the documented outer
+      stopping criteria.
+- [ ] Compare at least two temporal resolutions for a key quantity; absence of
+      timestep independence remains an explicit limitation.
 
 ## 6.4 Establish periodicity
 
@@ -473,9 +475,9 @@ assignment/data/breathing_waveform.csv
 
 Choose from the actual waveform, likely:
 
-- [ ] Inspiratory acceleration.
-- [ ] Peak inspiratory flow.
-- [ ] Deceleration, expiration, or flow reversal.
+- [x] Inspiratory acceleration at 0.24 s.
+- [x] Peak inspiratory flow at 0.50 s.
+- [x] Peak expiration with reversed flow at 1.50 s.
 
 For each time:
 

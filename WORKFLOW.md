@@ -47,6 +47,10 @@ The remote host needs:
 - The cloned repository
 - The Docker image `opencfd/openfoam-default:latest`
 
+For reproducible provenance, record the immutable image digest at execution
+time. The historical runs in this project retained the mutable `latest` tag but
+not its digest, so exact container-image reproduction cannot be claimed.
+
 Example Ubuntu setup:
 
 ```bash
@@ -679,9 +683,9 @@ Run and open the downloaded result automatically:
 
 The script intentionally deletes and recreates the generated `openFOAM/postop_fine` case locally and remotely. It does not modify the baseline `openFOAM/postop` case or `results/postop`.
 
-## 18. Mesh-independence comparison
+## 18. Mesh-sensitivity comparison
 
-Compare the baseline and fine cases in ParaView:
+Compare the baseline and refined cases in ParaView:
 
 ```bash
 paraview \
@@ -698,18 +702,22 @@ Useful comparison quantities include:
 - Wall-adjacent velocity gradients
 - Integrated inlet and outlet flow rates
 
-Visual similarity is not sufficient for a mesh-independence claim. Compare integral quantities and report their relative changes between mesh levels.
+Visual similarity is not sufficient to establish mesh independence. Compare
+integral quantities and report their relative changes between mesh levels. In
+this project the 0.15 mm HXT case was selected as the accuracy/cost compromise;
+the unconverged 0.12 mm case is a sensitivity comparator rather than a truth
+solution.
 
-Render the archived resistance-plane definitions on the postoperative Assignment
-4 mesh with:
+Render the archived resistance-plane definitions on the selected postoperative
+0.15 mm HXT mesh with:
 
 ```bash
 HOME=/tmp pvpython assignment/scripts/render_resistance_planes.py \
-  openFOAM/postop_assignment4/airways.msh
+  results/postop_hxt_015/airways.msh
 ```
 
 This reads `assignment/data/resistance_sections.json`, converts its metre-based
-origins to the millimetre coordinates of the preserved Gmsh mesh, and writes
+origins to the millimetre coordinates of the selected Gmsh mesh, and writes
 `report/report/figures/assignment4_resistance_planes.png`. Blue denotes the superior
 upstream plane and orange the inferior downstream plane.
 

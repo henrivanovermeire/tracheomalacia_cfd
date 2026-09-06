@@ -6,33 +6,29 @@
 
 ### Mesh specification
 
-| Parameter | Baseline value |
+| Parameter | Selected value |
 |---|---:|
 | Surface source | `meshes/postop/airways.stl` |
 | Surface SHA-256 | `1282e23e50a80f6fe06262f223f164077d5b146f20a5131537cb064006652111` |
 | Gmsh version | 4.15.2 |
-| Global characteristic length | 0.25 mm |
-| Surface classification angle | 40° |
-| 3D algorithm | Gmsh algorithm 1 (Delaunay) |
-| Optimization | Enabled |
+| Global characteristic length | 0.15 mm |
+| 3D algorithm | HXT |
 | Element order/type | First-order tetrahedra |
-| Volume cells | 209,652 |
-| Boundary faces | 40,874 |
-| Nodes | 44,383 |
+| Volume cells | 776,568 |
+| Points | 151,599 |
 | Physical volume | `fluid` |
 | Physical patches | `inlet`, `outlet_1`, `outlet_2`, `outlet_3`, `wall` |
-| Volume-mesh SHA-256 | `ed49b8ab9dc0047ea6285903457fca5dce7b4067f5286b34f17eaa4b6a3add35` |
-| Maximum aspect ratio | 35.675 |
-| Non-orthogonality | Mean 21.931°; maximum 87.064°; 7 faces >70° |
-| Maximum skewness | 1.654 |
-| Minimum cell volume | `3.2403e-14 m³` |
+| Maximum aspect ratio | 12.627 |
+| Maximum non-orthogonality | 69.817°; zero faces above 70° |
+| Maximum skewness | 1.1958 |
+| Minimum cell volume | `5.1159e-14 m³` |
 | Connected regions | 1 |
-| Full `checkMesh` result | 2 failed extended checks: 242 low-determinant cells and 33 low-weight faces |
+| Full `checkMesh` result | 1 failed extended check: 278 low-determinant cells |
 
-The mesh passed the standard geometry checks and had one connected fluid region.
-The stricter `-allTopology -allGeometry` run identified localized low determinant
-and interpolation-weight cells; these are retained as quality limitations for
-the sensitivity study.
+The selected mesh had one connected fluid region and passed the reported
+non-orthogonality and skewness criteria. The stricter
+`-allTopology -allGeometry` run identified 278 localized low-determinant cells;
+this remains a mesh-quality limitation.
 
 ### Near-boundary elements (maximum 100 words)
 
@@ -61,14 +57,19 @@ steady incompressible equations were solved with `simpleFoam`; pressure is
 reported as kinematic pressure and converted to Pa using \(P=\rho p\) where
 required.
 
-**Pending:** insert the selected air density and literature citation, and verify
-that the laminar assumption is consistent with calculated Reynolds numbers.
+Dimensional pressure uses \(\rho=1.204\,\mathrm{kg/m^3}\). At the normalized
+centerline-matched section, \(U=6.47\,\mathrm{m/s}\), equivalent diameter
+\(D=2.565\,\mathrm{mm}\), and the specified viscosity give \(Re\approx1107\).
+The steady laminar model is therefore a defensible proof-of-concept assumption,
+although the transient peak estimate of approximately 3500 motivates future
+transitional-model sensitivity testing.
 
 ### Residuals and convergence (maximum 100 words)
 
-The SIMPLE solution converged in 589 iterations. Final initial residuals were
-\(9.93\times10^{-7}\), \(7.57\times10^{-7}\), and \(6.48\times10^{-7}\) for
-\(U_x\), \(U_y\), and \(U_z\), and \(4.92\times10^{-6}\) for pressure. All
+The selected-mesh SIMPLE solution converged in 1611 iterations. Final initial
+residuals were \(9.97\times10^{-7}\), \(9.35\times10^{-7}\), and
+\(6.56\times10^{-7}\) for \(U_x\), \(U_y\), and \(U_z\), and
+\(6.87\times10^{-6}\) for pressure. All
 were below the configured controls of \(10^{-6}\) for velocity and
 \(10^{-5}\) for pressure. The complete histories are plotted on logarithmic
 axes in the report. Convergence of residuals establishes iterative convergence,
@@ -77,34 +78,34 @@ balance.
 
 ### Effect of 1000 additional iterations (maximum 50 words)
 
-Once the residuals and monitored axial velocity have stabilized, another 1000
-iterations should not materially change the result; it should only reduce the
-remaining iterative error. This must be verified by continuing from iteration
-2000 and reporting the absolute and percentage change in the same axial-velocity
-measurement at iteration 3000.
+The selected solution already met its residual criteria at iteration 1611, so
+another 1000 iterations would not be expected to materially change the
+\(6.473\,\mathrm{m/s}\) mean matched-section velocity if integral quantities
+were stable. This continuation was not executed; therefore no numerical change
+is claimed.
 
 ## 4.3 Results
 
 ### Flow, pressure, and lung distribution (maximum 100 words)
 
-At 2 L/min, 11.23% exited through the right superior lobar bronchus, 61.94%
-through the right inferior lobar bronchus, and 26.83% through the left main
-bronchus. Thus, right- and left-lung fractions were 73.17% and 26.83%; relative
+At 2 L/min, 11.80% exited through the right superior lobar bronchus, 61.88%
+through the right inferior lobar bronchus, and 26.31% through the left main
+bronchus. Thus, right- and left-lung fractions were 73.69% and 26.31%; relative
 mass imbalance was only \(6.0\times10^{-7}\%\). Because all outlets had equal
 zero gauge pressure, this unequal distribution arose from the resolved branch
 areas, lengths, orientations, and associated hydraulic resistance rather than a
-prescribed flow split. Final velocity and pressure visualizations will use the
-converged iteration-589 fields.
+prescribed flow split. The final velocity and pressure visualizations use the
+selected 0.15 mm HXT fields at iteration 1611.
 
 ### Local resistance (maximum 100 words)
 
-Fixed centerline-normal planes at the mapped superior and inferior stenosis
-limits gave area-averaged kinematic pressures of 53.70 and 27.99 m²/s². With
-\(\rho=1.204\,\mathrm{kg/m^3}\), \(\Delta P=30.95\) Pa. Mean section flow was
-\(3.347\times10^{-5}\,\mathrm{m^3/s}\), yielding
-\(R=\Delta P/Q=9.25\times10^5\,\mathrm{Pa\,s/m^3}\), or 15.41 Pa/(L/min).
-At the matched minimum section, area-averaged axial velocity was 6.53 m/s and
-sectional peak velocity was 9.25 m/s. Plane definitions are frozen in
+Fixed centerline-normal planes gave area-averaged kinematic pressures of 64.49
+and 35.24 m²/s². With \(\rho=1.204\,\mathrm{kg/m^3}\), \(\Delta P=35.21\) Pa.
+Using the conservative imposed inlet flux
+\(Q=3.3333\times10^{-5}\,\mathrm{m^3/s}\) gives
+\(R=1.0565\times10^6\,\mathrm{Pa\,s/m^3}\), or 17.61 Pa/(L/min). The
+interpolated slice flux is 0.36% higher and is not used for resistance. At the
+matched section, mean and peak velocities were 6.47 and 9.67 m/s. Plane definitions are frozen in
 `resistance_sections.json` for subsequent mesh comparisons.
 
 ## 4.4 Future work (maximum 100 words)

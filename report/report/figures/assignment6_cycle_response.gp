@@ -17,7 +17,7 @@ set xlabel "Time (s)"
 set ylabel "$R$ (Pa/(L/min))"
 set yrange [0:30]
 plot "/home/hvoverme/tracheomalacia_cfd/assignment/data/postop_transient_coarse_poc_metrics.csv" using 1:14 every ::1 with lines lw 2 lc rgb "#4d9221" title "Transient CFD", \
-     15.153 with lines dt 2 lw 1.5 lc rgb "#444444" title "Steady coarse-mesh value"
+     15.359 with lines dt 2 lw 1.5 lc rgb "#444444" title "Steady coarse-mesh value"
 set xlabel "Time (s)"
 set ylabel "Qualitative resistance (a.u.)"
 set yrange [0:3.5]

@@ -89,8 +89,7 @@
 
   \vfill
 
-  \textit{Reproducible project report; analyses still in progress are identified
-  explicitly in the text.}
+
 \end{titlepage}
 
 \hypersetup{pageanchor=true}
@@ -101,10 +100,9 @@
 % -----------------------------------------------------------------------------
 \begin{abstract}
 Tracheomalacia is characterised by excessive collapse or narrowing of the
-tracheal lumen and can substantially alter respiratory airflow. This project
-uses patient-specific computed tomography, three-dimensional airway
-segmentation, and computational fluid dynamics (CFD) to compare airflow before
-and after intervention. Airway surfaces are segmented in 3D Slicer, clipped
+tracheal lumen and can substantially alter respiratory airflow. This project uses patient-specific computed-tomography geometry with idealised
+boundary conditions, three-dimensional airway segmentation, and computational
+fluid dynamics (CFD) to assess anatomy and postoperative airflow. Airway surfaces are segmented in 3D Slicer, clipped
 along VMTK-derived centerlines, extended in the local centerline direction, and
 closed with planar caps. Tetrahedral volume meshes are generated with Gmsh and
 steady incompressible airflow is solved using OpenFOAM. This report documents
@@ -112,14 +110,17 @@ the reproducible processing pipeline, evaluates mesh quality and mesh
 independence, and compares clinically relevant flow quantities between the
 preoperative and postoperative geometries. The preoperative minimum lumen area
 was \SI{1.813}{\milli\metre\squared}, compared with
-\SI{5.169}{\milli\metre\squared} at the matched postoperative location, giving
-an area constriction of 64.9\%. In the steady postoperative model the local
-pressure drop was \SI{30.95}{\pascal}, the resistance was
-\SI{15.41}{\pascal\per\litre\per\minute}, and 73.2\% of outlet flow entered the
-right lung. A four-level HXT mesh study selected the \num{0.15}~mm mesh because
-its reported metrics differed by no more than 2.02\% from the denser mesh while
-using 48\% fewer cells. A complete-cycle transient calculation is configured;
-its final phase-resolved results are reported only after solver completion.
+\SI{5.169}{\milli\metre\squared} at the postoperative normalized
+centerline-matched location, giving a preoperative area deficit of 64.9\%
+relative to that postoperative section. On the selected \num{0.15}~mm HXT mesh,
+the steady postoperative model gave a local pressure drop of
+\SI{35.21}{\pascal}, conservative-flux resistance of
+\SI{17.61}{\pascal\per\litre\per\minute}, peak matched-section velocity of
+\SI{9.67}{\metre\per\second}, and 73.69\% right-lung flow. The four-level study
+showed small apparent sensitivity between the final two levels, but the
+unconverged, poorer-quality densest case prevents a rigorous mesh-independence
+claim. A complete-cycle coarse transient proof of concept provides qualitative
+phase-resolved trends.
 \end{abstract}
 
 \tableofcontents
@@ -156,7 +157,7 @@ The objectives of this project are to:
   \item How does the pressure drop across the trachea change?
   \item Where do peak velocities and recirculation regions occur?
   \item How is flow divided among the distal outlets?
-  \item Are the reported quantities sufficiently mesh independent?
+  \item How sensitive are the reported quantities to mesh refinement?
 \end{itemize}
 
 % -----------------------------------------------------------------------------
@@ -250,8 +251,12 @@ fluid--structure-interaction models.
 \label{sec:data}
 
 Two computed-tomography datasets are analysed: a preoperative case and a
-postoperative case. Table~\ref{tab:imaging} should be completed from the DICOM
-metadata and segmentation logs.
+postoperative case. Non-identifying DICOM geometry is summarized in
+Table~\ref{tab:imaging}. The inspected standard metadata do not explicitly state
+the respiratory phase, breath hold, or ventilator condition. Because
+tracheomalacia is dynamically phase-dependent, the scans cannot be assumed to
+represent equivalent respiratory states; part of the measured pre/post
+difference may therefore reflect acquisition state rather than intervention.
 
 \begin{table}[htbp]
   \centering
@@ -261,8 +266,8 @@ metadata and segmentation logs.
     \toprule
     Case & Voxel dimensions & Voxel spacing (mm) & Clinical state \\
     \midrule
-    Preoperative  & [insert] & [insert] & Before intervention \\
-    Postoperative & [insert] & [insert] & After intervention \\
+    Preoperative  & $512\times512\times192$ & $0.300781\times0.300781\times0.625$ & Before intervention \\
+    Postoperative & $512\times512\times203$ & $0.351562\times0.351562\times0.700$ & After intervention \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -284,7 +289,9 @@ Hounsfield-unit interval. Thresholds and seed coordinates are stored under
 coronal, sagittal, and three-dimensional views to exclude lung parenchyma and
 external air while retaining the clinically relevant branches.
 
-Record the final settings in Table~\ref{tab:segmentation}.
+The archived thresholds are listed in Table~\ref{tab:segmentation}. Final
+segment voxel counts were not exported from Slicer and are therefore reported
+as unavailable rather than reconstructed retrospectively.
 
 \begin{table}[htbp]
   \centering
@@ -294,8 +301,8 @@ Record the final settings in Table~\ref{tab:segmentation}.
     \toprule
     Case & Lower HU & Upper HU & Segmented voxels \\
     \midrule
-    Preoperative  & [insert] & [insert] & [insert] \\
-    Postoperative & [insert] & [insert] & [insert] \\
+    Preoperative  & $-1500$ & $-300$ & Not archived \\
+    Postoperative & $-1500$ & $-650$ & Not archived \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -343,7 +350,7 @@ silently overwriting one another.
   \label{fig:segmentation}
 \end{figure}
 
-\subsection{Anatomical measurements and degree of constriction}
+\subsection{Anatomical measurements and normalized pre/post comparison}
 \label{sec:anatomical_measurements}
 
 The preoperative constriction is bounded by proximal and distal landmarks on the
@@ -357,9 +364,12 @@ circular diameter is calculated from section area $A$ as
 \end{equation}
 
 The postoperative area and equivalent diameter are measured using the same
-procedure at 76.53\% of the inlet-to-carina centerline length. The carina is
-defined from the airway-network bifurcation nearest the airway seed. The primary
-area-based degree of constriction is
+procedure at 76.53\% of the inlet-to-carina centerline length. This is a
+reproducible normalized centerline-matching rule, not proof that the sections are
+anatomically homologous: surgery may alter tracheal length, curvature,
+longitudinal strain, and landmark position. The carina is defined from the
+airway-network bifurcation nearest the airway seed. The preoperative area deficit
+relative to this postoperative comparison section is
 
 \begin{equation}
   C_A = \left(1-\frac{A_{\mathrm{pre,min}}}
@@ -367,8 +377,10 @@ area-based degree of constriction is
   \label{eq:area_constriction}
 \end{equation}
 
-The measured area constriction is 64.9\%. For transparency, the corresponding
-minimum-Feret-diameter reduction is 65.2\% and is reported as
+The measured preoperative area deficit relative to the normalized
+centerline-matched postoperative section is 64.9\%. This is not a conventional
+within-scan stenosis severity, which would require a reference lumen in the same
+anatomical state. The analogous cross-scan minimum-Feret deficit is 65.2\%:
 
 \begin{equation}
   C_D = \left(1-\frac{D_{\mathrm{pre,min}}}
@@ -388,11 +400,11 @@ minimum-Feret-diameter reduction is 65.2\% and is reported as
     Preoperative minimum area & $A_{\mathrm{pre,min}}$ & 1.813 \si{\milli\metre\squared} \\
     Preoperative minimum Feret diameter & $D_{\mathrm{pre,Feret}}$ & 0.798 \si{\milli\metre} \\
     Preoperative equivalent diameter & $D_{\mathrm{pre,eq}}$ & 1.519 \si{\milli\metre} \\
-    Postoperative matched area & $A_{\mathrm{post,matched}}$ & 5.169 \si{\milli\metre\squared} \\
-    Postoperative minimum Feret diameter & $D_{\mathrm{post,Feret}}$ & 2.292 \si{\milli\metre} \\
-    Postoperative equivalent diameter & $D_{\mathrm{post,eq}}$ & 2.565 \si{\milli\metre} \\
-    Area constriction & $C_A$ & 64.9\% \\
-    Minimum Feret diameter reduction & $C_{D,\mathrm{Feret}}$ & 65.2\% \\
+    Postoperative normalized centerline-matched area & $A_{\mathrm{post,matched}}$ & 5.169 \si{\milli\metre\squared} \\
+    Postoperative comparison Feret diameter & $D_{\mathrm{post,Feret}}$ & 2.292 \si{\milli\metre} \\
+    Postoperative comparison equivalent diameter & $D_{\mathrm{post,eq}}$ & 2.565 \si{\milli\metre} \\
+    Preoperative area deficit relative to postoperative section & $C_A$ & 64.9\% \\
+    Cross-scan minimum-Feret deficit & $C_{D,\mathrm{Feret}}$ & 65.2\% \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -401,8 +413,10 @@ The measured dimensions are consistent with the scale reported in paediatric
 tracheal-surgery literature. Arcieri et al. described 25 children with congenital
 tracheal stenosis and reported a mean internal diameter of
 \SI{1.5}{\milli\metre}; the cohort had a median operative age of seven months and
-median weight of \SI{5.2}{\kilogram} \cite{arcieri2018}. This closely matches the
-\SI{1.519}{\milli\metre} preoperative equivalent diameter obtained here. The
+median weight of \SI{5.2}{\kilogram} \cite{arcieri2018}. The reported value is
+similar in scale to the \SI{1.519}{\milli\metre} equivalent diameter obtained
+here, but the clinical internal-diameter definition is not necessarily equivalent
+to an area-derived circular diameter. The
 smaller minimum Feret diameter of \SI{0.798}{\milli\metre} is not contradictory:
 it characterises the narrowest caliper dimension of a non-circular lumen, whereas
 the equivalent diameter is derived from total cross-sectional area. The
@@ -421,10 +435,11 @@ validation of the patient-specific segmentation or landmark placement.
     \includegraphics[width=\linewidth]{postop_matched_section.png}
     \caption{Mapped postoperative comparison section.}
   \end{subfigure}
-  \caption{Centerline-based anatomical correspondence. Orange curves show the
+  \caption{Normalized centerline-based pre/post comparison. Orange curves show the
   measured tracheal interval and magenta contours identify the preoperative
-  minimum and corresponding postoperative lumen sections. The postoperative
-  location is mapped using 76.53\% of inlet-to-carina centerline distance.}
+  minimum and normalized centerline-matched postoperative comparison sections. The
+  postoperative location is mapped using 76.53\% of inlet-to-carina centerline
+  distance; exact anatomical homology is not assumed.}
   \label{fig:anatomical_measurements}
 \end{figure}
 
@@ -472,9 +487,8 @@ uniform target characteristic length controlled by \texttt{MESH\_SIZE}.
 
 \begin{table}[htbp]
   \centering
-  \caption{Replicable mesh settings and quality metrics. All current volume
-  elements are first-order tetrahedra. Add the exact Gmsh version and final
-  values from each \texttt{checkMesh} log.}
+  \caption{Replicable HXT mesh settings and final \texttt{checkMesh} metrics.
+  All volume elements are first-order tetrahedra generated with Gmsh 4.15.2.}
   \label{tab:meshes}
   \resizebox{\textwidth}{!}{%
   \begin{tabular}{@{}lrrrrrr@{}}
@@ -528,8 +542,8 @@ SI units.
     \includegraphics[width=\linewidth]{assignment5_mesh_015_closeup.png}
     \caption{Selected-mesh surface triangulation at the carina.}
   \end{subfigure}
-  \caption{Postoperative HXT mesh refinement in matched anatomical frontal
-  views. The complete baseline and selected meshes are shown above, with
+  \caption{Postoperative HXT mesh refinement in identically framed anatomical
+  frontal views. The complete baseline and selected meshes are shown above, with
   identically framed carina close-ups below. Both levels use the same geometry,
   physical surface groups, and HXT algorithm; only target characteristic length
   differs. Surface-edge density illustrates refinement, while quantitative
@@ -567,8 +581,16 @@ diameter $D$:
   \mathrm{Re} = \frac{UD}{\nu}.
 \end{equation}
 
-[Calculate Reynolds numbers at the inlet and stenosis and discuss whether a
-laminar, transitional, or turbulent model is justified.]
+At the normalized centerline-matched section, the selected-mesh steady mean
+velocity \SI{6.47}{\metre\per\second}, equivalent diameter
+\SI{2.565}{\milli\metre}, and $\nu=\SI{1.5e-5}{\metre\squared\per\second}$ give
+$\mathrm{Re}\approx1107$. This section-level estimate supports laminar modelling
+for the steady assignment, although curvature, branching, and local jets can
+promote disturbances earlier than in a straight pipe. At transient peak flow,
+the estimated section Reynolds number is approximately 3500, in the transitional
+range. A laminar model was retained for the proof of concept to avoid introducing
+an unvalidated turbulence closure; transitional-model sensitivity is required
+before quantitative interpretation of transient extrema.
 
 \subsection{Boundary conditions}
 
@@ -619,18 +641,18 @@ required physical analyses or validation.
 
 \begin{table}[htbp]
   \centering
-  \caption{Software and provenance information. Replace placeholders with the
-  immutable versions used for the final simulations.}
+  \caption{Software and provenance information available for the reported
+  workflow. Unarchived identifiers are stated explicitly rather than inferred.}
   \label{tab:software}
-  \begin{tabular}{@{}lll@{}}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\textwidth}>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.51\textwidth}@{}}
     \toprule
     Stage & Software & Version or identifier \\
     \midrule
-    Segmentation & 3D Slicer + SlicerVMTK & 5.12.2; extension [insert] \\
-    Surface/volume meshing & Gmsh & [insert] \\
-    CFD & OpenFOAM Docker image & 2512; image ID [insert] \\
-    Post-processing & ParaView & [insert] \\
-    Source state & Git & commit [insert] \\
+    Segmentation & 3D Slicer + SlicerVMTK & 5.12.2; extension version not archived \\
+    Surface/volume meshing & Gmsh & 4.15.2 \\
+    CFD & OpenFOAM Docker image & OpenFOAM 2512; image digest not archived \\
+    Post-processing & ParaView & 6.1.1 \\
+    Source state & Git & {\scriptsize\texttt{48188123d6ed4d6c62a936c581fb7a9c5e690a25}} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -642,9 +664,11 @@ solved using GAMG and velocity using a symmetric Gauss--Seidel smoothed solver.
 The SIMPLE algorithm uses two non-orthogonal correctors. The configured residual
 controls are $10^{-5}$ for pressure and $10^{-6}$ for velocity.
 
-The parallel mesh is decomposed using the Scotch method. Simulations are run in
-the \texttt{opencfd/openfoam-default:latest} Docker image. The exact image ID
-and Git commit are recorded in Table~\ref{tab:software}.
+The parallel mesh is decomposed using the Scotch method. Simulations were run in the
+\texttt{opencfd/openfoam-default:latest} Docker image. Because the mutable tag
+was used and its digest was not archived, OpenFOAM 2512 and the retained case
+files are reproducible evidence, but exact container-image reproduction cannot
+be claimed.
 
 \subsection{Transient solver and breathing waveform}
 \label{sec:transient_method}
@@ -767,10 +791,10 @@ support selection of the \SI{0.15}{\milli\metre} mesh for the final analysis.
 
 \subsection{Convergence and mass conservation}
 
-The SIMPLE solution met residual control after 589 iterations. Final initial
-residuals were $9.93\times10^{-7}$, $7.57\times10^{-7}$, and
-$6.48\times10^{-7}$ for $U_x$, $U_y$, and $U_z$, respectively, and
-$4.92\times10^{-6}$ for pressure. These are below the configured criteria of
+The selected \num{0.15}~mm HXT solution met residual control after 1611
+iterations. Final initial residuals were $9.97\times10^{-7}$,
+$9.35\times10^{-7}$, and $6.56\times10^{-7}$ for $U_x$, $U_y$, and $U_z$,
+respectively, and $6.87\times10^{-6}$ for pressure. These are below the configured criteria of
 $10^{-6}$ for velocity and $10^{-5}$ for pressure. Final outlet-flow integration
 is still used to verify that
 
@@ -786,33 +810,22 @@ imbalance.
   \resizebox{0.95\textwidth}{!}{\input{figures/assignment4_residuals.tex}}
   \caption{Initial residual evolution for the postoperative steady simulation.
   Dashed and dotted lines indicate the configured velocity and pressure
-  convergence criteria. The SIMPLE algorithm stopped at iteration 589 after all
-  criteria were satisfied.}
+  convergence criteria. The SIMPLE algorithm stopped at iteration 1611 after all
+  criteria were satisfied on the selected 776,568-cell HXT mesh.}
   \label{fig:steady_residuals}
 \end{figure}
 
 \subsection{Effect of additional steady iterations}
 
-Assignment 4 requests an assessment of whether 1000 additional iterations alter
-an axial-velocity parameter. A fixed centerline-normal section before the
-bifurcation is used, and its area-averaged axial velocity is recorded before and
-after continuation without reinitialising the solution.
+Assignment 4 asks how 1000 additional iterations would affect an axial-velocity
+parameter. The selected HXT solution already satisfies residual control at
+iteration 1611, with stable mass flow. Continuing another 1000 iterations should
+therefore leave the matched-section mean axial velocity
+(\SI{6.473}{\metre\per\second}) unchanged within residual-level iterative error;
+it would not improve spatial discretisation. This continuation was not executed,
+so no unsupported numerical change is reported.
 
-\begin{table}[htbp]
-  \centering
-  \caption{Sensitivity of the selected axial-velocity monitor to 1000 additional
-  steady iterations.}
-  \label{tab:additional_iterations}
-  \begin{tabular}{@{}lrrr@{}}
-    \toprule
-    Parameter & Iteration 2000 & Iteration 3000 & Relative change (\%) \\
-    \midrule
-    Area-averaged axial velocity & [insert] & [insert] & [insert] \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Mesh-independence assessment}
+\subsection{Mesh-sensitivity assessment}
 \label{sec:mesh_sensitivity}
 
 At least three postoperative mesh levels are preferred so that a trend can be
@@ -828,17 +841,19 @@ $d$, the Assignment 5 percentage difference is defined as
 
 \begin{table}[htbp]
   \centering
-  \caption{Mesh-independence comparison.}
+  \caption{Mesh-sensitivity comparison; the densest case is an unconverged
+  comparison level, not a reference truth.}
   \label{tab:mesh_independence}
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
     Quantity & 0.25 mm & 0.20 mm & 0.15 mm & 0.12 mm \\
     \midrule
-    Resistance (Pa/(L/min)) & 15.153 & 16.361 & 17.544 & 17.906 \\
+    Resistance (Pa/(L/min)) & 15.359 & 16.493 & 17.608 & 17.936 \\
     Peak velocity (m/s) & 9.447 & 9.573 & 9.670 & 9.822 \\
     Right-lung fraction (\%) & 73.664 & 73.619 & 73.686 & 73.397 \\
     Right-superior share (\%) & 15.231 & 15.597 & 16.017 & 16.250 \\
     Solver iterations & 596 & 770 & 1611 & 2000$^*$ \\
+    Solver execution time (s) & 10.27 & 21.76 & 104.36 & 267.98 \\
     \bottomrule
   \end{tabular}
   \\[2pt]\footnotesize{$^*$Iteration limit reached without satisfying residual control.}
@@ -870,16 +885,18 @@ $d$, the Assignment 5 percentage difference is defined as
 \subsection{Velocity field}
 
 At the converged postoperative solution, velocity vectors accelerate through the
-narrow distal trachea and divide at the carina. The fixed matched section has an
-area-averaged axial velocity of \SI{6.53}{\metre\per\second} and a sectional
-peak magnitude of \SI{9.25}{\metre\per\second}. The vectors also show the
+narrow distal trachea and divide at the carina. The fixed normalized
+centerline-matched section has an area-averaged axial velocity of
+\SI{6.47}{\metre\per\second} and a sectional peak magnitude of
+\SI{9.67}{\metre\per\second}. The vectors also show the
 unequal right/left flow division quantified from patch fluxes.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.92\textwidth]{assignment4_velocity_vectors.png}
   \caption{Postoperative velocity-vector field at the converged steady solution
-  (iteration 589). Arrow direction represents local flow direction; arrow colour
+  on the selected \num{0.15}~mm HXT mesh (iteration 1611). Arrow direction
+  represents local flow direction; arrow colour
   represents velocity magnitude on a fixed \SIrange{0}{10}{\metre\per\second}
   scale. The airway surface is shown semi-transparently for anatomical context.}
   \label{fig:velocity}
@@ -899,7 +916,8 @@ area-averaged plane pressures rather than centerline point samples.
   \centering
   \includegraphics[width=0.92\textwidth]{assignment4_pressure_distribution.png}
   \caption{Postoperative dimensional gauge-pressure distribution at the
-  converged steady solution (iteration 589), shown in anatomical frontal view.
+  converged selected-mesh steady solution (iteration 1611), shown in anatomical
+  frontal view.
   OpenFOAM kinematic pressure was multiplied by an air density of
   \SI{1.204}{\kilogram\per\metre\cubed}; outlet gauge pressure is zero.}
   \label{fig:pressure}
@@ -924,7 +942,7 @@ lung; the left main bronchus formed the left group. The primary left/right resul
 was
 
 \begin{equation}
-  Q_R = 73.17\%, \qquad Q_L = 26.83\%.
+  Q_R = 73.69\%, \qquad Q_L = 26.31\%.
 \end{equation}
 
 The individual outlet values in Table~\ref{tab:outlet_flow} provide the supporting
@@ -939,9 +957,9 @@ truncated airway domain.
   \label{tab:outlet_flow}
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Case & Outlet 1 (\%) & Outlet 2 (\%) & Outlet 3 (\%) & Imbalance (\%) \\
+    Case & O1 (\%) & O2 (\%) & O3 (\%) & Imbalance (\%) \\
     \midrule
-    Postoperative & 11.23 & 61.94 & 26.83 & $6.0\times10^{-7}$ \\
+    Selected 0.15 mm HXT & 11.80 & 61.88 & 26.31 & $6.0\times10^{-7}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -954,8 +972,8 @@ truncated airway domain.
     \toprule
     Lung & Flow rate (\si{\metre\cubed\per\second}) & Fraction (\%) \\
     \midrule
-    Left  & $8.9449\times10^{-6}$ & 26.83 \\
-    Right & $2.4388\times10^{-5}$ & 73.17 \\
+    Left  & $8.7712\times10^{-6}$ & 26.31 \\
+    Right & $2.4562\times10^{-5}$ & 73.69 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -977,14 +995,18 @@ $\Delta P$ and volumetric flow $Q$, local resistance is
 
 For the incompressible OpenFOAM pressure field $p$,
 $\Delta P=\rho\,\Delta p$. Area-averaged kinematic pressures were
-\SI{53.70}{\metre\squared\per\second\squared} upstream and
-\SI{27.99}{\metre\squared\per\second\squared} downstream. With
+\SI{64.49}{\metre\squared\per\second\squared} upstream and
+\SI{35.24}{\metre\squared\per\second\squared} downstream. With
 $\rho=\SI{1.204}{\kilogram\per\metre\cubed}$, the local pressure drop was
-\SI{30.95}{\pascal}; at $Q=\SI{3.347e-5}{\metre\cubed\per\second}$ this gives
-$R=\SI{9.25e5}{\pascal\second\per\metre\cubed}$, equivalent to
-\SI{15.41}{\pascal\per\litre\per\minute}. The matched-plane mean axial and peak
-velocities were \SI{6.53}{\metre\per\second} and
-\SI{9.25}{\metre\per\second}, respectively.
+\SI{35.21}{\pascal}. Resistance uses the conservative prescribed inlet flux
+$Q=\SI{3.3333e-5}{\metre\cubed\per\second}$, giving
+$R=\SI{1.056e6}{\pascal\second\per\metre\cubed}$ or
+\SI{17.61}{\pascal\per\litre\per\minute}. The mean of the two interpolated
+ParaView slice integrals was \SI{3.345e-5}{\metre\cubed\per\second}, 0.36\%
+above the inlet flux; it is reported as post-processing interpolation error and
+is not used as the resistance denominator. The normalized centerline-matched
+plane mean and peak velocities were \SI{6.47}{\metre\per\second} and
+\SI{9.67}{\metre\per\second}, respectively.
 
 \begin{figure}[htbp]
   \centering
@@ -1005,11 +1027,11 @@ velocities were \SI{6.53}{\metre\per\second} and
     \toprule
     Quantity & Value \\
     \midrule
-    Upstream area-averaged kinematic pressure & 53.695 \si{\metre\squared\per\second\squared} \\
-    Downstream area-averaged kinematic pressure & 27.993 \si{\metre\squared\per\second\squared} \\
-    Pressure difference $\Delta P$ & 30.945 \si{\pascal} \\
-    Volumetric flow $Q$ & \num{3.347e-5} \si{\metre\cubed\per\second} \\
-    Resistance $R=\Delta P/Q$ & \num{9.247e5} \si{\pascal\second\per\metre\cubed} \\
+    Upstream area-averaged kinematic pressure & 64.492 \si{\metre\squared\per\second\squared} \\
+    Downstream area-averaged kinematic pressure & 35.244 \si{\metre\squared\per\second\squared} \\
+    Pressure difference $\Delta P$ & 35.215 \si{\pascal} \\
+    Conservative inlet flow $Q$ & \num{3.3333e-5} \si{\metre\cubed\per\second} \\
+    Resistance $R=\Delta P/Q$ & \num{1.056e6} \si{\pascal\second\per\metre\cubed} \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1018,7 +1040,7 @@ velocities were \SI{6.53}{\metre\per\second} and
 \section{Transient postoperative analysis}
 \label{sec:transient_results}
 
-\subsection{Time-step convergence}
+\subsection{Adaptive timestep and PIMPLE convergence}
 
 The complete cycle comprised 355,016 adaptive timesteps. Of these, 354,399
 (99.826\%) satisfied the PIMPLE outer criterion and 617 reached the limit of
@@ -1111,7 +1133,7 @@ constriction supports only a qualitative expectation of higher resistance.
 Applying the same static pressure at every distal outlet deliberately leaves the
 left/right flow division unconstrained, making it an output of the reconstructed
 geometry rather than an imposed boundary-condition ratio. The predicted
-73.17\% right and 26.83\% left distribution is therefore a defensible measure of
+73.69\% right and 26.31\% left distribution is therefore a defensible measure of
 the relative aerodynamic resistance of the resolved postoperative branches.
 Differences in calibre, pathway length, branching angle, curvature, and local
 flow separation can all contribute to the unequal result.
@@ -1133,12 +1155,16 @@ that patient-specific parameters were available.
 \subsection{Mesh sensitivity and optimal mesh}
 
 Resistance and the small right-superior branch split were more mesh-sensitive
-than total right-lung fraction. From 0.15 to 0.12 mm, all selected metrics changed
-by at most 2.02\%, while cell count increased by 92\% and solver execution time
-by 157\%. The 0.12 mm case also failed residual control at 2000 iterations,
-whereas 0.15 mm converged in 1611. With a practical 2.5\% acceptance threshold,
-the 0.15 mm mesh is selected as the optimal balance between apparent spatial
-convergence and computational efficiency.
+than total right-lung fraction. From 0.15 to 0.12 mm, the monitored values changed
+by at most 1.83\% after resistance was consistently defined using conservative
+inlet flux. Cell count increased by 92\% and OpenFOAM-reported solver execution
+time on the same remote workflow increased from 104.36 to 267.98 s (157\%). The
+0.12 mm case also failed residual control at 2000 iterations and had markedly
+poorer local mesh quality, whereas 0.15 mm converged in 1611 iterations. Thus,
+iteration and discretisation error cannot be separated rigorously and mesh
+independence is not demonstrated. The 0.15 mm mesh is selected pragmatically
+because the monitored quantities show small apparent sensitivity to the denser
+comparison while its convergence and quality are better.
 
 \subsection{Constant-diameter resistance during inspiration}
 
@@ -1211,16 +1237,18 @@ misrepresenting the present proof-of-concept result.
 \label{sec:conclusions}
 
 The preoperative minimum lumen area was \SI{1.813}{\milli\metre\squared},
-compared with \SI{5.169}{\milli\metre\squared} at the corresponding
-postoperative location, giving a 64.9\% area constriction and demonstrating a
-substantial anatomical increase after intervention. Steady postoperative CFD at
+compared with \SI{5.169}{\milli\metre\squared} at the postoperative normalized
+centerline-matched location. The resulting 64.9\% value is a cross-scan area
+deficit, not a conventional within-scan stenosis severity, and unknown respiratory
+phase limits causal attribution to intervention. On the selected 776,568-cell,
+\num{0.15}~mm HXT mesh, steady postoperative CFD at
 \SI{2}{\litre\per\minute} predicted a local pressure drop of
-\SI{30.95}{\pascal}, resistance of
-\SI{15.41}{\pascal\per\litre\per\minute}, peak velocity of
-\SI{9.25}{\metre\per\second}, and a geometry-driven 73.17/26.83\% right/left
-flow split. The \num{0.15}~mm HXT mesh was selected for steady analysis because
-its monitored metrics differed from the densest mesh by at most 2.02\% while
-avoiding its convergence and cost penalty.
+\SI{35.21}{\pascal}, conservative-flux resistance of
+\SI{17.61}{\pascal\per\litre\per\minute}, matched-section peak velocity of
+\SI{9.67}{\metre\per\second}, and a geometry-driven 73.69/26.31\% right/left
+flow split. The final two mesh levels differed by at most 1.83\% for monitored
+quantities, but the unconverged, poorer-quality densest case supports only an
+apparent mesh-sensitivity plateau, not mesh independence.
 
 A complete postoperative transient proof of concept produced the prescribed
 $\pm\SI{6.283}{\litre\per\minute}$ cycle and direction-dependent resistance
@@ -1256,8 +1284,43 @@ uses the finite-volume method. Conservation equations are integrated over each
 mesh cell and the divergence theorem converts volume derivatives into fluxes
 through its faces. Interpolation and gradient schemes provide face values from
 cell-centred quantities, producing sparse algebraic systems for velocity
-$\mathbf{U}$ and pressure $p$ \cite{openfoam}. OpenFOAM uses kinematic pressure
-for incompressible flow,
+$\mathbf{U}$ and pressure $p$ \cite{openfoam}.
+
+\subsection{Organisation of an OpenFOAM case}
+
+An OpenFOAM case is organised into three main directories corresponding to the
+essential components of a CFD problem. The \texttt{0/} directory contains the
+flow fields and their initial and boundary conditions. In the present airway
+cases, these include velocity \texttt{U} and kinematic pressure \texttt{p}. The
+patch entries specify the prescribed tracheal inlet flow, no-slip airway wall,
+and pressure-based distal outlets. Thus, this directory defines how the fluid
+initially occupies and interacts with the computational domain. For the steady
+calculation, \texttt{U} contains the constant \SI{2}{\litre\per\minute} inlet
+condition. For the transient calculation, the corresponding inlet condition is
+linked to the sinusoidal breathing waveform and permits flow reversal.
+
+The \texttt{constant/} directory describes the time-independent physical model
+and spatial domain. Its \texttt{polyMesh/} subdirectory contains the
+finite-volume cells, faces, points, and named boundary patches generated after
+the Gmsh mesh was imported and scaled from millimetres to metres. The remaining
+files specify properties such as the kinematic viscosity
+$\nu=\SI{1.5e-5}{\metre\squared\per\second}$ and the laminar momentum-transport
+model. The selected steady case used the \num{0.15}~mm HXT mesh with 776,568
+tetrahedra, whereas the transient proof of concept used the \num{0.25}~mm HXT
+mesh with 180,163 tetrahedra.
+
+The \texttt{system/} directory controls the numerical calculation.
+\texttt{controlDict} selects \texttt{simpleFoam} or \texttt{pimpleFoam}, sets
+the simulated time or iteration controls, determines write intervals, and, for
+the transient case, enables adaptive timestepping. \texttt{fvSchemes} defines
+the temporal and spatial discretisation schemes, while \texttt{fvSolution}
+sets the linear solvers, tolerances, relaxation factors, and SIMPLE or PIMPLE
+correctors. Finally, \texttt{decomposeParDict} divides the mesh for MPI
+execution. Together, \texttt{0/}, \texttt{constant/}, and \texttt{system/}
+represent the physical and boundary specification, spatial discretisation, and
+numerical solution of the governing equations used in this project.
+
+OpenFOAM uses kinematic pressure for incompressible flow,
 
 \begin{equation}
   p=\frac{P}{\rho},
@@ -1312,8 +1375,8 @@ between iterations and can stabilise pressure--velocity coupling.
 In this study, pressure is solved using GAMG and velocity with
 \texttt{smoothSolver} using symmetric Gauss--Seidel smoothing. Two
 non-orthogonal correctors are applied in the steady case. The SIMPLE residual
-controls are $10^{-5}$ for pressure and $10^{-6}$ for velocity. The Assignment
-4 postoperative solution met these criteria after 589 iterations. Convergence
+controls are $10^{-5}$ for pressure and $10^{-6}$ for velocity. The selected postoperative HXT solution met these criteria after 1611
+iterations. Convergence
 is additionally assessed through integrated inlet/outlet flow because small
 algebraic residuals alone do not guarantee conservation of the reported
 quantity.
@@ -1328,9 +1391,9 @@ the nonlinear momentum terms; within it, pressure correctors repeatedly enforce
 continuity and update $p$, $\mathbf{U}$, and the face flux. More correctors can
 improve coupling at a timestep but increase its computational cost.
 
-The selected-mesh transient configuration uses the second-order backward time
-scheme, at most three outer correctors, two pressure correctors, and one
-non-orthogonal corrector. Its timestep is adjusted to limit the maximum Courant
+The transient proof-of-concept configuration uses the second-order backward time
+scheme, at most three outer correctors, two pressure correctors, and two
+non-orthogonal correctors. Its timestep is adjusted to limit the maximum Courant
 number,
 
 \begin{equation}
@@ -1338,9 +1401,10 @@ number,
 \end{equation}
 
 where a smaller limit improves temporal resolution but requires more steps. The
-coarse proof-of-concept configuration instead uses bounded upwind convection
-and two non-orthogonal correctors; its Courant limit is recorded with the final
-results because it was varied during timing tests.
+coarse proof-of-concept configuration uses bounded upwind convection and a
+configured maximum Courant number of 5; the observed maximum was 5.296. These
+choices prioritised completion of the qualitative one-cycle demonstration and
+are retained as limitations rather than evidence of timestep independence.
 
 An OpenFOAM linear-solver \emph{initial residual} is the normalised algebraic
 defect before an individual equation solve, whereas its final residual is the

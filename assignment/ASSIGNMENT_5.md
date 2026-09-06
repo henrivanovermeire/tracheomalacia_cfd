@@ -11,9 +11,10 @@ resistance, right-lung flow fraction, right-superior share of right flow, and
 matched-section peak velocity. Relative difference from the densest mesh was
 calculated as
 \(\delta_i=|\phi_i-\phi_{0.12}|/|\phi_{0.12}|\times100\%\).
-For the 0.15 mm mesh, differences were 2.02%, 0.39%, 1.43%, and 1.54%,
-respectively. Corresponding 0.20 mm differences were 8.62%, 0.30%, 4.02%, and
-2.53%. The 0.12 mm solution reached 2000 iterations without satisfying residual
+For the 0.15 mm mesh, differences were 1.83%, 0.39%, 1.43%, and 1.54%,
+respectively. Corresponding 0.20 mm differences were 8.04%, 0.30%, 4.02%, and
+2.53%. Resistance uses the conservative inlet-patch flux rather than an
+interpolated section flux. The 0.12 mm solution reached 2000 iterations without satisfying residual
 control, so densest-mesh differences are interpreted cautiously. Plots use
 actual volume-cell count.
 
@@ -21,10 +22,11 @@ actual volume-cell count.
 
 Resistance and the small right-superior branch split were more mesh-sensitive
 than total right-lung fraction. Refinement from 0.15 to 0.12 mm changed all
-selected metrics by at most 2.02%, but increased cells by 92% and solver time by 157%. The 0.12 mm case did not reach residual control, whereas the 0.15 mm case
-converged in 1611 iterations. Using a 2.5% threshold, the 0.15 mm mesh is therefore optimal: it is the
-finest converged solution, satisfies the threshold against the denser result,
-and avoids substantial computational cost for limited apparent improvement.
+selected metrics by at most 1.83%, but increased cells by 92% and OpenFOAM
+solver execution time from 104.36 to 267.98 s (157%) in the same remote
+workflow. The 0.12 mm case did not reach residual control, whereas the 0.15 mm
+case converged in 1611 iterations. Under a pragmatic 2.5% threshold, 0.15 mm is
+the preferred accuracy/cost compromise, not proof of mesh independence.
 
 ## 5.3 Limitations
 

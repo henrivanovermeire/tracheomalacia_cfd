@@ -14,10 +14,12 @@ def parse_case(case,size,data_dir,results):
     iterations=[int(x) for x in re.findall(r"^Time = (\d+)$",solver,re.M)]
     execution=[float(x) for x in re.findall(r"ExecutionTime = ([0-9.eE+-]+)",solver)]
     region=m["region_metrics"]; matched=m["planes"]["matched"]
-    return {"case":case,"mesh_size_mm":size,"cells":number(r"cells:\s+(\d+)",int),"points":number(r"points:\s+(\d+)",int),"max_aspect_ratio":number(r"Max aspect ratio =\s*([^ ]+)"),"max_non_orthogonality_deg":number(r"Mesh non-orthogonality Max:\s*([^ ]+)"),"severe_non_orthogonal_faces":number(r"Number of severely non-orthogonal \(> 70 degrees\) faces:\s*(\d+)",int),"max_skewness":number(r"Max skewness =\s*([^ ]+)"),"minimum_cell_volume_m3":number(r"Min volume =\s*([^ ]+)"),"final_iteration":max(iterations) if iterations else None,"execution_time_s":execution[-1] if execution else None,"pressure_drop_pa":region["pressure_drop_pa"],"resistance_pa_per_l_min":region["local_resistance_pa_per_l_min"],"matched_mean_axial_velocity_m_s":matched["area_average_axial_velocity_m_s"],"matched_peak_velocity_m_s":matched["peak_velocity_magnitude_m_s"],"right_lung_fraction_percent":f["lungs"]["right"]["fraction_percent"],"left_lung_fraction_percent":f["lungs"]["left"]["fraction_percent"],"right_superior_share_percent":f["right_superior_share_percent"],"mass_imbalance_percent":f["relative_mass_imbalance_percent"]}
+    conservative_flow=abs(f["inlet"]["flow_rate_m3_s"])
+    conservative_resistance=region["pressure_drop_pa"]/(conservative_flow*60000.0)
+    return {"case":case,"mesh_size_mm":size,"cells":number(r"cells:\s+(\d+)",int),"points":number(r"points:\s+(\d+)",int),"max_aspect_ratio":number(r"Max aspect ratio =\s*([^ ]+)"),"max_non_orthogonality_deg":number(r"Mesh non-orthogonality Max:\s*([^ ]+)"),"severe_non_orthogonal_faces":number(r"Number of severely non-orthogonal \(> 70 degrees\) faces:\s*(\d+)",int),"max_skewness":number(r"Max skewness =\s*([^ ]+)"),"minimum_cell_volume_m3":number(r"Min volume =\s*([^ ]+)"),"final_iteration":max(iterations) if iterations else None,"execution_time_s":execution[-1] if execution else None,"pressure_drop_pa":region["pressure_drop_pa"],"conservative_flow_rate_m3_s":conservative_flow,"resistance_pa_per_l_min":conservative_resistance,"matched_mean_axial_velocity_m_s":matched["area_average_axial_velocity_m_s"],"matched_peak_velocity_m_s":matched["peak_velocity_magnitude_m_s"],"right_lung_fraction_percent":f["lungs"]["right"]["fraction_percent"],"left_lung_fraction_percent":f["lungs"]["left"]["fraction_percent"],"right_superior_share_percent":f["right_superior_share_percent"],"mass_imbalance_percent":f["relative_mass_imbalance_percent"]}
 
 def plot(csv_path,tex_path,difference=False):
-    report=tex_path.resolve().parents[1]; out=tex_path.resolve().relative_to(report).as_posix(); gp=tex_path.resolve().with_suffix('.gp'); cols={"resistance_pa_per_l_min":13,"right_lung_fraction_percent":16,"right_superior_share_percent":18,"matched_peak_velocity_m_s":15}; suffix="_difference_percent"; diffcols={k:20+i for i,(k,_) in enumerate(METRICS)}
+    report=tex_path.resolve().parents[1]; out=tex_path.resolve().relative_to(report).as_posix(); gp=tex_path.resolve().with_suffix('.gp'); cols={"resistance_pa_per_l_min":14,"right_lung_fraction_percent":17,"right_superior_share_percent":19,"matched_peak_velocity_m_s":16}; suffix="_difference_percent"; diffcols={k:21+i for i,(k,_) in enumerate(METRICS)}
     commands=[]
     for key,label in METRICS:
         col=diffcols[key] if difference else cols[key]; ylabel="Difference from finest mesh (\\\\%)" if difference else label
@@ -32,7 +34,7 @@ def main():
             row[f"{key}_difference_percent"]=100*abs(row[key]-reference[key])/abs(reference[key]) if reference[key] else 0.0
         row["right_lung_fraction_percentage_point_difference"]=abs(row["right_lung_fraction_percent"]-reference["right_lung_fraction_percent"])
     fields=list(rows[0]); csv_path=a.data_dir/"mesh_sensitivity.csv"; a.data_dir.mkdir(parents=True,exist_ok=True)
-    with csv_path.open('w',newline='') as out: w=csv.DictWriter(out,fieldnames=fields); w.writeheader(); w.writerows(rows)
+    with csv_path.open('w', newline='') as out: w=csv.DictWriter(out, fieldnames=fields, lineterminator='\n'); w.writeheader(); w.writerows(rows)
     (a.data_dir/"mesh_sensitivity.json").write_text(json.dumps({"schema_version":1,"reference_case":reference["case"],"difference_formula":"abs(value-reference)/abs(reference)*100","rows":rows},indent=2)+"\n")
     plot(csv_path,Path("report/report/figures/assignment5_mesh_metrics.tex")); plot(csv_path,Path("report/report/figures/assignment5_mesh_differences.tex"),True); print(csv_path); print("Reference:",reference["case"])
 if __name__=="__main__": main()

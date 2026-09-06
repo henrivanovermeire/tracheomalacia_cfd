@@ -29,15 +29,15 @@ word-limit compliance must also be present in the final submission.
 | Assignment 1 response | ✅ | Five reviewed sections are within 150 words, integrated into LaTeX, and properly cited; optional figures were not used |
 | Assignment 2 response | 🟡 | Two questions prepared; lecture review and Teams submission require confirmation |
 | Reproducible processing workflow | ✅ | Slicer-to-Gmsh-to-OpenFOAM workflow documented and scripted |
-| Preoperative anatomy | 🟡 | Segmentation and stenosis measurements are complete; final annotated report figure remains |
-| Postoperative anatomy | 🟡 | Segmentation/CFD pipeline has been exercised; final report evidence remains incomplete |
+| Preoperative anatomy | ✅ | Segmentation, measurements, and annotated report figures are complete |
+| Postoperative anatomy | ✅ | Segmentation, selected-mesh steady CFD, and report figures are complete |
 | Baseline CFD simulation | ✅ | Converged 2 L/min result, residuals, pressure, velocity, resistance, and outlet distribution are documented |
-| Fine-mesh CFD simulation | ✅ | Four-level HXT study completed; 0.15 mm selected as optimal based on accuracy/cost trade-off |
-| Assignment 3 response | 🟡 | All numerical and written requirements are complete; only final annotated pre-/postoperative reconstruction figures remain |
-| Assignment 4 response | 🟡 | Quantitative analysis and principal figures are complete; resistance-plane visualization and extra-iteration check remain |
+| Fine-mesh CFD simulation | ✅ | Four-level HXT sensitivity study completed; 0.15 mm selected as the accuracy/cost compromise |
+| Assignment 3 response | ✅ | Numerical, written, and illustrated requirements are integrated in the report |
+| Assignment 4 response | ✅ | Selected 0.15 mm HXT results and resistance-plane visualization are complete; the unexecuted extra-iteration test is reported transparently |
 | Assignment 5 response | 🟡 | Numerical analysis, plots, discussion, limitations, and mesh selection are complete; submission packaging remains |
-| Assignment 6 response | ⬜ | No transient breathing-cycle simulation or required transient analyses implemented yet |
-| Final LaTeX report | 🟡 | Template builds successfully; most result placeholders remain |
+| Assignment 6 response | ✅ | One-cycle postoperative coarse-grid transient proof of concept and required analyses are complete |
+| Final LaTeX report | ✅ | Report content is populated and builds; remaining limitations and unavailable provenance are stated explicitly |
 
 ---
 
@@ -91,14 +91,14 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
 | Describe segmentation process | ✅ | Final assignment-specific methods draft in `ASSIGNMENT_3.md` describes both case workflows and manual preop lung removal | None |
-| Preoperative 3D reconstruction | ⬜ | Pipeline and preoperative assets exist | Generate and export a high-quality, consistently oriented figure |
-| Postoperative 3D reconstruction | 🟡 | Postoperative CFD surface and STL exist | Export a publication-quality reconstruction figure |
+| Preoperative 3D reconstruction | ✅ | Consistently oriented, annotated reconstruction is included in the report | None |
+| Postoperative 3D reconstruction | ✅ | Consistently oriented postoperative comparison is included in the report | None |
 | Measure preoperative constriction length | ✅ | Accepted centerline path; `preop_stenosis_summary.json`: 12.157 mm | None |
 | Measure preoperative minimum diameter | ✅ | Accepted centerline-normal section: minimum Feret 0.798 mm, equivalent diameter 1.519 mm, area 1.813 mm² | None |
-| Measure postoperative diameter at matching location | ✅ | Matched section at 76.53% inlet-to-carina: area 5.169 mm², minimum Feret 2.292 mm, equivalent diameter 2.565 mm | None |
-| Calculate percentage constriction | ✅ | Area constriction 64.9%; minimum-Feret-diameter reduction 65.2%; recorded in `stenosis_comparison.json` | None |
-| Explain constriction formula | ✅ | `ASSIGNMENT_3.md` selects area reduction because continuity depends on area and the lumen is non-circular | None |
-| Number and caption all figures | ⬜ | LaTeX figure placeholders exist | Add final images, numbers, labels, and complete captions |
+| Measure postoperative diameter at normalized centerline-matched location | ✅ | Section at 76.53% inlet-to-carina: area 5.169 mm², minimum Feret 2.292 mm, equivalent diameter 2.565 mm | None |
+| Calculate cross-scan deficit | ✅ | Preoperative area deficit 64.9%; minimum-Feret deficit 65.2%; recorded in `stenosis_comparison.json` | None |
+| Explain comparison formula | ✅ | Report uses area because continuity depends on area, while explicitly distinguishing this cross-scan deficit from conventional within-scan stenosis severity | None |
+| Number and caption all figures | ✅ | Final images, numbering, labels, and captions are integrated | None |
 | Respect 200-word limit | ✅ | Final methods/measurements response is 194 words | None |
 
 ### Measurements to record
@@ -112,8 +112,8 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Postoperative equivalent diameter | `D_post,eq` | 2.565 | mm | `2 sqrt(A/pi)` at matched section |
 | Preoperative minimum area | `A_pre,min` | 1.813 | mm² | Minimum sampled centerline-normal area |
 | Postoperative matched area | `A_post,matched` | 5.169 | mm² | Same normalized anatomical position |
-| Degree of area constriction | `C_A` | 64.9 | % | `(1 - A_pre,min/A_post,matched) × 100` |
-| Minimum Feret diameter reduction | `C_D,Feret` | 65.2 | % | `(1 - D_pre,Feret/D_post,Feret) × 100` |
+| Cross-scan preoperative area deficit | `C_A` | 64.9 | % | `(1 - A_pre,min/A_post,matched) × 100`; not conventional stenosis severity |
+| Cross-scan minimum-Feret deficit | `C_D,Feret` | 65.2 | % | `(1 - D_pre,Feret/D_post,Feret) × 100` |
 
 ## 3.2 Flow behaviour — 4 points, max. 100 words
 
@@ -163,21 +163,21 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Fluid properties, max. 100 words section | 🟡 | Draft in `ASSIGNMENT_4.md`; `nu=1.5e-5 m²/s`, Newtonian incompressible laminar model documented | Insert selected density/citation and verify Reynolds-number justification |
-| Boundary conditions | 🟡 | Case corrected to age-appropriate 2 L/min inlet, no-slip wall, and equal zero-pressure outlets | Rerun steady simulation after inlet-flow correction |
-| Residual figure and convergence, max. 100 words | ✅ | 2 L/min run converged at iteration 589; CSV and Gnuplot/cairolatex figure generated; mass imbalance is 6.0e-7% | None |
-| Effect of 1000 additional iterations, max. 50 words | 🟡 | A 45-word hypothesis is drafted in `ASSIGNMENT_4.md` | Continue solution to iteration 3000 and quantify axial-velocity change |
+| Fluid properties, max. 100 words section | ✅ | `nu=1.5e-5 m²/s`, `rho=1.204 kg/m³`, Newtonian incompressible laminar model, and Reynolds-number justification documented | None |
+| Boundary conditions | ✅ | Selected case uses 2 L/min inlet, no-slip wall, and equal zero-pressure outlets | None |
+| Residual figure and convergence, max. 100 words | ✅ | Selected 0.15 mm HXT run converged at iteration 1611; residual history and mass balance are documented | None |
+| Effect of 1000 additional iterations, max. 50 words | ✅ | Expected negligible effect is explained; continuation was not executed and no unsupported numerical change is claimed | None |
 
 ## 4.3 Results — 3 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Visualise flow | ✅ | Reproducible full-lumen velocity-vector render at iteration 589 with fixed 0–10 m/s scale | None |
-| Visualise pressure | ✅ | Reproducible frontal dimensional-pressure map and Gnuplot/cairolatex centerline pressure profile generated in Pa | None |
-| Calculate left/right lung flow distribution | ✅ | Right 73.17%, left 26.83%; exact patch flows and mass balance saved in `postop_assignment4_flow_distribution.json` | None |
+| Visualise flow | ✅ | Reproducible selected-mesh full-lumen velocity-vector render at iteration 1611 with fixed 0–10 m/s scale | None |
+| Visualise pressure | ✅ | Selected-mesh frontal dimensional-pressure map and centerline pressure profile generated in Pa | None |
+| Calculate left/right lung flow distribution | ✅ | Right 73.686%, left 26.314%; exact patch flows and mass balance saved in `postop_hxt_015_flow_distribution.json` | None |
 | Explain equal/unequal distribution | ✅ | Final response attributes split under equal outlet pressure to resolved branch geometry and resistance | None |
-| Define pre-bifurcation resistance section | ✅ | Superior, matched, and inferior centerline-normal planes frozen in `resistance_sections.json` | Add plane visualization later |
-| Calculate and visualise local resistance, max. 100 words | 🟡 | ΔP 30.95 Pa; resistance 9.25e5 Pa·s/m³; fixed-plane metrics saved reproducibly | Add resistance-plane figure |
+| Define pre-bifurcation resistance section | ✅ | Superior, matched, and inferior centerline-normal planes frozen in `resistance_sections.json` | None |
+| Calculate and visualise local resistance, max. 100 words | ✅ | Selected-mesh ΔP 35.21 Pa and conservative-flux resistance 1.0565e6 Pa·s/m³ are documented and visualized | None |
 
 ## 4.4 Future work — 1 point, max. 100 words
 
@@ -260,7 +260,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Compare with constant-diameter expectation | ✅ | Computed curve compared with steady reference and ideal constant-resistance reasoning | None |
 | Plot applied inlet flow waveform | ✅ | `assignment6_breathing_waveform.tex/.pdf` generated from exact boundary table | None |
 | Sketch qualitative pre-/postoperative resistance | ✅ | Explicitly non-computational arbitrary-unit comparison included in cycle-response figure | None |
-| Explain pre-/postoperative resistance difference | ✅ | Discussion links 64.9% preoperative area constriction to qualitatively higher expected resistance | None |
+| Explain pre-/postoperative resistance difference | ✅ | Discussion links the 64.9% cross-scan preoperative area deficit to qualitatively higher expected resistance without presenting it as conventional stenosis severity | None |
 
 ## 6.3 Discussion — 1 point
 
@@ -285,8 +285,8 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Centerline-directed adaptive extensions | ✅ | Implemented through SlicerVMTK logic |
 | Flat CFD caps | ✅ | `AirwayExtendedSurfaceCapped` model |
 | STL export | ✅ | `segmentation/scripts/export_segmentation.py` → `meshes/<case>/airways.stl` |
-| Preoperative final surface verification | 🟡 | Cleaned segmentation, refined points, boundary map, and case-specific STL now exist; annotated report figure and measurements remain |
-| Postoperative final surface verification | 🟡 | Workflow validated interactively; report image still needed |
+| Preoperative final surface verification | ✅ | Cleaned segmentation, refined points, boundary map, measurements, STL, and annotated report figure exist |
+| Postoperative final surface verification | ✅ | Workflow and normalized centerline comparison figure are documented |
 
 ## Meshing
 
@@ -296,9 +296,9 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Physical inlet/outlet/wall groups | 🟡 | Postoperative IDs verified; preoperative Gmsh cap IDs still require inspection |
 | Separate mesh-generation script | ✅ | `create_volume_mesh.sh` |
 | Baseline mesh preserved for reproducibility | ✅ | `openFOAM/postop/airways.msh` intended for version control |
-| Baseline `checkMesh` metrics recorded in report | ⬜ | Add final values to `report/report/report.tex` |
-| Fine mesh generated | 🟡 | Automated in `run_fine_cfd.sh`; confirm final run and archive parameters |
-| Fine `checkMesh` metrics recorded in report | ⬜ | Add final values |
+| Baseline `checkMesh` metrics recorded in report | ✅ | 0.25 mm HXT metrics are tabulated with limitations |
+| Refined meshes generated | ✅ | Four HXT levels from 0.25 to 0.12 mm are archived in results/data |
+| Refined `checkMesh` metrics recorded in report | ✅ | All levels are tabulated; poor local quality of the densest mesh is explicit |
 
 ## OpenFOAM
 
@@ -313,20 +313,20 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Result reconstruction | ✅ | `reconstructPar` included |
 | Stale-time cleanup | ✅ | Nonzero old times removed while preserving `0/` |
 | Result retrieval | ✅ | `fetch_cfd_results.sh` excludes `processor*/` and mirrors deletions |
-| Baseline result interpretation | ⬜ | Add ParaView-derived quantitative results and figures |
-| Fine result interpretation | ⬜ | Add mesh-independence comparison |
+| Selected steady result interpretation | ✅ | Selected 0.15 mm HXT quantitative results and figures are integrated |
+| Refined result interpretation | ✅ | Four-level mesh-sensitivity comparison is integrated |
 
 ## Numerical-model checks
 
 | Item | Status | Remaining work |
 |---|---:|---|
-| Inlet flow rate documented | ✅ | Verify physiological scenario and cite source/assumption |
-| No-slip wall documented | ✅ | None unless wall-motion limitations are expanded |
-| Outlet pressure model documented | ✅ | Discuss equal-pressure outlet assumption |
-| Laminar model documented | ✅ | Calculate Reynolds numbers and justify or revise model |
-| Solver convergence documented | 🟡 | Logs exist; prepare residual plot and state final residuals |
-| Mass conservation verified | ⬜ | Integrate inlet and outlet fluxes |
-| Mesh independence verified | ⬜ | Compare integral quantities between baseline and fine cases |
+| Inlet flow rate documented | ✅ | Physiological interpretation and idealized-boundary limitation are stated |
+| No-slip wall documented | ✅ | Rigid-wall limitation is explicit |
+| Outlet pressure model documented | ✅ | Equal-pressure, geometry-driven split and its limitation are discussed |
+| Laminar model documented | ✅ | Steady and transient Reynolds estimates and transitional limitation are stated |
+| Solver convergence documented | ✅ | Residual plots, criteria, iteration counts, and transient outer convergence are reported |
+| Mass conservation verified | ✅ | Conservative inlet/outlet patch fluxes and imbalance are reported |
+| Mesh sensitivity assessed | ✅ | Four integral quantities are compared; mesh independence is not claimed |
 
 ---
 
@@ -334,20 +334,20 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 ## Figures
 
-- [ ] Preoperative 3D reconstruction with constriction length and minimum diameter.
-- [ ] Postoperative 3D reconstruction with matched-location diameter.
-- [ ] Qualitative velocity and pressure sketch required by Assignment 3.
-- [ ] Baseline and fine volume-mesh comparison.
-- [ ] Preoperative and postoperative velocity magnitude with identical scale.
-- [ ] Preoperative and postoperative pressure with identical scale.
-- [ ] Centerline or section-based pressure plot.
-- [ ] Solver residual/convergence plot.
+- [x] Preoperative 3D reconstruction with constriction length and minimum diameter.
+- [x] Postoperative 3D reconstruction with normalized centerline comparison section.
+- [x] Qualitative velocity and pressure sketch required by Assignment 3.
+- [x] Four-level volume-mesh comparison.
+- [x] Selected steady velocity vectors and dimensional pressure distribution.
+- [x] Three transient velocity-vector phases with a common scale.
+- [x] Centerline and section-based pressure plots.
+- [x] Steady and transient solver convergence plots.
 
 ## Tables
 
-- [ ] Imaging metadata.
-- [ ] Segmentation thresholds and voxel counts.
-- [ ] Anatomical measurements and constriction percentage.
+- [x] Imaging geometry metadata and explicit unknown respiratory phase.
+- [x] Segmentation thresholds; unarchived final segmented voxel counts stated transparently.
+- [x] Anatomical measurements and cross-scan deficits.
 - [ ] Mesh cell counts and quality metrics.
 - [ ] Boundary conditions.
 - [ ] Outlet flow rates and fractions.
