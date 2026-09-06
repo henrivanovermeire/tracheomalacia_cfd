@@ -47,7 +47,7 @@ Repository copy: `assignment/arcticle.pdf`.
 
 **Status: complete.** The final standalone response is in
 `assignment/ASSIGNMENT_1.md` and the same content is integrated into
-`report/report.tex` under “Critical review of a selected CFD paper.”
+`report/report/report.tex` under “Critical review of a selected CFD paper.”
 
 - [x] Extracted the research question, methods, quantitative results,
       limitations, and conclusions from the full paper.
@@ -63,7 +63,7 @@ Repository copy: `assignment/arcticle.pdf`.
 - [x] Completed **Evaluation** in 132 words.
 - [x] Chose not to use optional reproduced figures, remaining below the maximum
       of three and avoiding unnecessary page use.
-- [x] Rebuilt `report/report.pdf` successfully.
+- [x] Rebuilt `report/report/report.pdf` successfully.
 
 ---
 
@@ -557,5 +557,5 @@ assignment/data/
 ## Report integration rule
 
 Only move a checkbox to complete when the corresponding value, figure, table,
-or explanation is present in `report/report.tex` or linked reproducible data.
+or explanation is present in `report/report/report.tex` or linked reproducible data.
 Implementation alone is not completion of an assignment deliverable.

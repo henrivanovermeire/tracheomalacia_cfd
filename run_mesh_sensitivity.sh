@@ -30,13 +30,13 @@ for i in 0 1 2 3; do
  [[ -f "$foam" ]] || { echo "Missing reconstructed case marker: $foam" >&2; exit 1; }
  HOME=/tmp pvpython "$SCRIPT_DIR/assignment/scripts/extract_cfd_metrics.py" "$foam" --label "$case_name"
  python3 "$SCRIPT_DIR/assignment/scripts/extract_patch_flows.py" "$case_name"
- python3 "$SCRIPT_DIR/assignment/scripts/parse_openfoam_residuals.py" "$SCRIPT_DIR/results/$case_name/log.simpleFoam.parallel" --csv "$SCRIPT_DIR/assignment/data/${case_name}_residuals.csv" --figure "$SCRIPT_DIR/report/figures/${case_name}_residuals.tex"
+ python3 "$SCRIPT_DIR/assignment/scripts/parse_openfoam_residuals.py" "$SCRIPT_DIR/results/$case_name/log.simpleFoam.parallel" --csv "$SCRIPT_DIR/assignment/data/${case_name}_residuals.csv" --figure "$SCRIPT_DIR/report/report/figures/${case_name}_residuals.tex"
 done
 python3 "$SCRIPT_DIR/assignment/scripts/aggregate_mesh_sensitivity.py"
-make -B -C "$SCRIPT_DIR/report"
+make -B -C "$SCRIPT_DIR/report/report"
 echo "======================================"
 echo "MESH SENSITIVITY WORKFLOW COMPLETE"
 echo "Data:    $SCRIPT_DIR/assignment/data/mesh_sensitivity.csv"
-echo "Metrics: $SCRIPT_DIR/report/figures/assignment5_mesh_metrics.tex"
-echo "Errors:  $SCRIPT_DIR/report/figures/assignment5_mesh_differences.tex"
+echo "Metrics: $SCRIPT_DIR/report/report/figures/assignment5_mesh_metrics.tex"
+echo "Errors:  $SCRIPT_DIR/report/report/figures/assignment5_mesh_differences.tex"
 echo "======================================"

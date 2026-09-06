@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def main():
-    p=argparse.ArgumentParser(); p.add_argument("--csv",type=Path,default=Path("assignment/data/breathing_waveform.csv")); p.add_argument("--table",type=Path,default=Path("openFOAM/postop_transient/constant/breathingFlowRate.table")); p.add_argument("--plot",type=Path,default=Path("report/figures/assignment6_breathing_waveform.tex")); p.add_argument("--period",type=float,default=2.0); p.add_argument("--minute-volume",type=float,default=2.0,help="L/min"); p.add_argument("--samples",type=int,default=401); a=p.parse_args()
+    p=argparse.ArgumentParser(); p.add_argument("--csv",type=Path,default=Path("assignment/data/breathing_waveform.csv")); p.add_argument("--table",type=Path,default=Path("openFOAM/postop_transient/constant/breathingFlowRate.table")); p.add_argument("--plot",type=Path,default=Path("report/report/figures/assignment6_breathing_waveform.tex")); p.add_argument("--period",type=float,default=2.0); p.add_argument("--minute-volume",type=float,default=2.0,help="L/min"); p.add_argument("--samples",type=int,default=401); a=p.parse_args()
     peak=a.minute_volume*math.pi/60000.0
     rows=[]
     for i in range(a.samples):

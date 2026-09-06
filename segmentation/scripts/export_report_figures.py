@@ -6,7 +6,7 @@ measurement:
     exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_report_figures.py").read())
 
 The script reads the case from AirwayLungSegmentation's AirwayCase attribute and
-writes PNG files under report/figures. It temporarily changes display and camera
+writes PNG files under report/report/figures. It temporarily changes display and camera
 settings, then restores the scene as closely as possible.
 """
 
@@ -18,7 +18,7 @@ import vtk
 
 
 PROJECT_PATH = Path("/home/hvoverme/tracheomalacia_cfd")
-OUTPUT_DIRECTORY = PROJECT_PATH / "report" / "figures"
+OUTPUT_DIRECTORY = PROJECT_PATH / "report" / "report" / "figures"
 SEGMENTATION_NODE_NAME = "AirwayLungSegmentation"
 AIRWAY_SEGMENT_NAME = "Airways"
 CFD_MODEL_NODE_NAME = "AirwayExtendedSurfaceCapped"

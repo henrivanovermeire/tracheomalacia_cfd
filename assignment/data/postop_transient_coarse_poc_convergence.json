@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "log": "results/postop_transient_coarse_poc/log.pimpleFoam.full",
+  "completed_timesteps": 355016,
+  "converged_timesteps": 354399,
+  "not_converged_timesteps": 617,
+  "converged_fraction_percent": 99.82620501611196,
+  "first_not_converged_time_s": 1.19976e-05,
+  "last_not_converged_time_s": 2.0,
+  "maximum_courant_number": 5.2959652,
+  "maximum_mean_courant_number": 0.53980271,
+  "minimum_delta_t_s": 3.2867707e-06,
+  "maximum_delta_t_s": 0.00020193927,
+  "maximum_absolute_cumulative_continuity_error": 0.00052468924,
+  "final_execution_time_s": 64994.09,
+  "final_clock_time_s": 65095.0,
+  "final_time_s": 2.0,
+  "csv_rows": 5539
+}

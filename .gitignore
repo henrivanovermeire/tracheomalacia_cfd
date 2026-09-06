@@ -218,14 +218,20 @@ __marimo__/
 .streamlit/secrets.toml
 
 # LaTeX build intermediates (the generated report PDF is retained).
-report/*.aux
-report/*.log
-report/*.out
-report/*.toc
-report/*.lof
-report/*.lot
-report/figures/*.aux
-report/figures/*.log
+report/report/*.aux
+report/report/*.log
+report/report/*.out
+report/report/*.toc
+report/report/*.lof
+report/report/*.lot
+report/report/figures/*.aux
+report/report/figures/*.log
+report/presentation/*.aux
+report/presentation/*.log
+report/presentation/*.nav
+report/presentation/*.out
+report/presentation/*.snm
+report/presentation/*.toc
 
 # Downloaded CFD results and generated comparison cases are local artifacts.
 results/

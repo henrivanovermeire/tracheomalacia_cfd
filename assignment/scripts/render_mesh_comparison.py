@@ -101,7 +101,7 @@ def main():
     parser.add_argument("baseline_mesh", type=Path)
     parser.add_argument("selected_mesh", type=Path)
     parser.add_argument(
-        "--output-directory", type=Path, default=Path("report/figures")
+        "--output-directory", type=Path, default=Path("report/report/figures")
     )
 
     parser.add_argument("--width", type=int, default=1600)

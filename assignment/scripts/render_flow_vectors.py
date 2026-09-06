@@ -4,7 +4,7 @@
 Example:
     pvpython assignment/scripts/render_flow_vectors.py \
         results/postop_assignment4/postop_assignment4.foam \
-        --output report/figures/assignment4_velocity_vectors.png
+        --output report/report/figures/assignment4_velocity_vectors.png
 """
 
 import argparse
@@ -34,7 +34,7 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("report/figures/assignment4_velocity_vectors.png"),
+        default=Path("report/report/figures/assignment4_velocity_vectors.png"),
     )
     parser.add_argument(
         "--slice-origin",
@@ -57,6 +57,10 @@ def main():
     parser.add_argument("--width", type=int, default=2400)
     parser.add_argument("--height", type=int, default=1800)
     parser.add_argument("--velocity-max", type=float, default=10.0)
+    parser.add_argument(
+        "--time", type=float, default=None,
+        help="Requested saved time; defaults to the final available time",
+    )
     args = parser.parse_args()
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +74,8 @@ def main():
     if hasattr(reader, "CellArrays"):
         reader.CellArrays = ["U", "p"]
     time_values = list(reader.TimestepValues) if reader.TimestepValues else [0.0]
-    final_time = max(time_values)
+    requested_time = max(time_values) if args.time is None else args.time
+    final_time = min(time_values, key=lambda value: abs(value - requested_time))
     reader.UpdatePipeline(final_time)
 
     # Convert the cell-centred OpenFOAM velocity to points for smooth slice
@@ -92,6 +97,8 @@ def main():
     section.SliceType.Normal = list(args.slice_normal)
     section.UpdatePipeline(final_time)
 
+    # Use sparse full-volume glyphs so all curved branches remain represented in
+    # the frontal projection without the heavy depth-layer overlap of dense data.
     glyphs = Glyph(registrationName="Velocity vectors", Input=velocity, GlyphType="Arrow")
     glyphs.OrientationArray = ["POINTS", "U"]
     glyphs.ScaleArray = ["POINTS", "VelocityMagnitude"]
@@ -105,6 +112,9 @@ def main():
     glyphs.UpdatePipeline(final_time)
 
     view = CreateView("RenderView")
+    # Render() evaluates the pipeline at the view time. Without setting this,
+    # requested transient states can all be redrawn at the default/final time.
+    view.ViewTime = final_time
     view.ViewSize = [args.width, args.height]
     view.Background = [1.0, 1.0, 1.0]
     view.UseColorPaletteForBackground = 0
@@ -121,14 +131,14 @@ def main():
     airway_display.DiffuseColor = [0.65, 0.68, 0.72]
     ColorBy(airway_display, None)
 
-    velocity_lut = GetColorTransferFunction("VelocityMagnitude")
+    velocity_lut = GetColorTransferFunction("U")
     velocity_lut.ApplyPreset("Viridis", True)
     velocity_lut.RescaleTransferFunction(0.0, args.velocity_max)
-    velocity_opacity = GetOpacityTransferFunction("VelocityMagnitude")
+    velocity_opacity = GetOpacityTransferFunction("U")
     velocity_opacity.RescaleTransferFunction(0.0, args.velocity_max)
     glyph_display = Show(glyphs, view)
     glyph_display.Representation = "Surface"
-    ColorBy(glyph_display, ("POINTS", "VelocityMagnitude"))
+    ColorBy(glyph_display, ("POINTS", "U", "Magnitude"))
     glyph_display.LookupTable = velocity_lut
     velocity_lut.RescaleTransferFunction(0.0, args.velocity_max)
     velocity_opacity.RescaleTransferFunction(0.0, args.velocity_max)
@@ -166,7 +176,7 @@ def main():
         TransparentBackground=0,
         CompressionLevel=2,
     )
-    print(f"Rendered final time: {final_time:g}")
+    print(f"Rendered saved time: {final_time:g} (requested {requested_time:g})")
     print(f"Velocity range: 0 to {args.velocity_max:g} m/s")
     print(f"Output: {args.output}")
 

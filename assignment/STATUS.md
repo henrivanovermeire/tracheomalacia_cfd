@@ -3,7 +3,7 @@
 **Project:** Patient-specific airway CFD in tracheomalacia  
 **Student:** Henri Van Overmeire  
 **Specification:** [`ASSIGNMENT.md`](ASSIGNMENT.md)  
-**Report source:** [`../report/report.tex`](../report/report.tex)  
+**Report source:** [`../report/report/report.tex`](../report/report/report.tex)
 **Workflow:** [`../WORKFLOW.md`](../WORKFLOW.md)
 
 This file tracks whether the project has produced the evidence required by the
@@ -52,7 +52,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Select a scientific paper | ✅ | `assignment/arcticle.pdf` | None |
 | Record complete paper citation | ✅ | Citation and DOI recorded in `ASSIGNMENT.md` | None |
 | Extract Assignment 1 requirements | ✅ | Five required headings and limits recorded | None |
-| Goal, max. 150 words | ✅ | Final 97-word section in `ASSIGNMENT_1.md` and `report/report.tex` | None |
+| Goal, max. 150 words | ✅ | Final 97-word section in `ASSIGNMENT_1.md` and `report/report/report.tex` | None |
 | Methods, max. 150 words | ✅ | Final 129-word section includes geometry, boundary conditions, solver, extensions, and mesh study | None |
 | Results, max. 150 words | ✅ | Final 119-word section includes pressure, velocity, wall shear stress, turbulence, and spirometry findings | None |
 | Limitations, max. 150 words | ✅ | Final 127-word section distinguishes key model and generalisability limitations | None |
@@ -119,7 +119,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Draw qualitative velocity behaviour | ✅ | Reproducible vector figure `report/figures/assignment3_flow_behavior.pdf` | None |
+| Draw qualitative velocity behaviour | ✅ | Reproducible vector figure `report/report/figures/assignment3_flow_behavior.pdf` | None |
 | State physical law for velocity | ✅ | Continuity equation included in final 97-word response | None |
 | Explain pressure before constriction | ✅ | Viscous pressure gradient and Hagen–Poiseuille relation included | None |
 | Explain pressure through constriction | ✅ | Bernoulli conversion and irreversible loss included | None |
@@ -240,33 +240,33 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Configure transient postoperative simulation | 🟡 | `prepare_transient_case.sh`; 0.15 mm HXT mesh; `pimpleFoam` | Run and accept pilot |
+| Configure transient postoperative simulation | ✅ | Complete 2 s `pimpleFoam` PoC on the 0.25 mm HXT mesh; exact fallback controls documented | None; production-mesh run remains future work |
 | Define material properties | ✅ | Incompressible Newtonian air; `ν = 1.5e-5 m²/s`, `ρ = 1.204 kg/m³` for dimensional pressure | Add final citation for density |
 | Apply time-varying breathing inlet profile | ✅ | Versioned sinusoidal table and generator; ±6.283 L/min peak | None |
 | Document all boundary conditions | ✅ | Flow-rate inlet, reversal-capable pressure outlets, no-slip wall documented in report | None |
-| Select and document time-step size | 🟡 | Original `maxCo=1` rejected as too costly; revised timing test uses initial 1e-5 s, adaptive to 5e-5 s, `maxCo=2` | Assess completed timing log and peak-flow pilot |
-| Discuss residual evolution | 🟡 | Early tests show tight linear convergence but strict outer criteria were not met | Parse complete timing/pilot logs by time step |
-| Define convergence assessment | 🟡 | Outer targets U=2e-3, p=1e-2; linear tolerances remain 1e-8; continuity monitored | Validate criteria over completed timing run |
-| Identify unconverged time steps | ⬜ | No transient run yet | Analyse every time step after simulation |
+| Select and document time-step size | ✅ | Final PoC: initial 1e-5 s, adaptive maximum 2e-4 s, `maxCo=5`; observed 3.287e-6–2.019e-4 s | Temporal-independence study remains a limitation |
+| Discuss residual evolution | ✅ | Full 904 MB log parsed; Courant/timestep figure and quantitative convergence discussion integrated | None |
+| Define convergence assessment | ✅ | Outer and linear criteria, continuity, Courant control, and timestep status assessed over complete cycle | None |
+| Identify unconverged time steps | ✅ | 617/355,016 did not meet the outer criterion; localized at startup and zero-flow transitions | None |
 
 ## 6.2 Results — 5.5 points
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Velocity vectors coloured by magnitude at three time points | ⬜ | Candidate phases: 0.25, 0.50, and 1.50 s | Create consistent ParaView figures after full run |
-| Explain time-point selection | 🟡 | Acceleration, peak inspiration, and peak expiration selected conceptually | Confirm against saved output times |
-| Plot postoperative local resistance over a complete cycle | ⬜ | Fixed planes exist; no transient fields yet | Compute section-averaged pressure difference and flow over time |
+| Velocity vectors coloured by magnitude at three time points | ✅ | Common-scale frontal panels at 0.24, 0.50, and 1.50 s integrated into report | None |
+| Explain time-point selection | ✅ | Accelerating inspiration, peak inspiration, and peak expiration tied to exact waveform states | None |
+| Plot postoperative local resistance over a complete cycle | ✅ | 100 saved states extracted; near-zero-flow values masked at 5% of peak | None |
 | Use same section as Assignment 4 | ✅ | `assignment/data/resistance_sections.json` | Reuse unchanged in transient extractor |
-| Compare with constant-diameter expectation | 🟡 | Inertia, separation, phase lag, and hysteresis described conceptually | Ground discussion in computed curve |
+| Compare with constant-diameter expectation | ✅ | Computed curve compared with steady reference and ideal constant-resistance reasoning | None |
 | Plot applied inlet flow waveform | ✅ | `assignment6_breathing_waveform.tex/.pdf` generated from exact boundary table | None |
-| Sketch qualitative pre-/postoperative resistance | ⬜ | No sketch | Produce panel B requested by assignment |
-| Explain pre-/postoperative resistance difference | ⬜ | No final interpretation | Link stenosis and unsteady losses to expected behaviour |
+| Sketch qualitative pre-/postoperative resistance | ✅ | Explicitly non-computational arbitrary-unit comparison included in cycle-response figure | None |
+| Explain pre-/postoperative resistance difference | ✅ | Discussion links 64.9% preoperative area constriction to qualitatively higher expected resistance | None |
 
 ## 6.3 Discussion — 1 point
 
 | Requirement | Status | Existing evidence | Remaining work |
 |---|---:|---|---|
-| Explain how unconverged time steps would be addressed | ⬜ | No transient convergence study | Discuss smaller time steps, more inner iterations, solver controls, mesh quality, and resources |
+| Explain how unconverged time steps would be addressed | ✅ | Targeted remedies prioritize lower Courant limit, correctors, periodic initialization, and mesh repair | None |
 
 ---
 
@@ -296,7 +296,7 @@ evaluation of excessive dynamic airway collapse,” *Clinical Biomechanics* 50,
 | Physical inlet/outlet/wall groups | 🟡 | Postoperative IDs verified; preoperative Gmsh cap IDs still require inspection |
 | Separate mesh-generation script | ✅ | `create_volume_mesh.sh` |
 | Baseline mesh preserved for reproducibility | ✅ | `openFOAM/postop/airways.msh` intended for version control |
-| Baseline `checkMesh` metrics recorded in report | ⬜ | Add final values to `report/report.tex` |
+| Baseline `checkMesh` metrics recorded in report | ⬜ | Add final values to `report/report/report.tex` |
 | Fine mesh generated | 🟡 | Automated in `run_fine_cfd.sh`; confirm final run and archive parameters |
 | Fine `checkMesh` metrics recorded in report | ⬜ | Add final values |
 

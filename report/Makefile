@@ -1,17 +1,17 @@
-LATEX := pdflatex
-TARGET := report
+.PHONY: all article presentation clean distclean
 
-.PHONY: all clean distclean
+all: article presentation
 
-all: $(TARGET).pdf
+article:
+	$(MAKE) -C report
 
-$(TARGET).pdf: $(TARGET).tex
-	$(LATEX) -interaction=nonstopmode -halt-on-error $(TARGET).tex
-	$(LATEX) -interaction=nonstopmode -halt-on-error $(TARGET).tex
+presentation:
+	$(MAKE) -C presentation
 
 clean:
-	rm -f $(TARGET).aux $(TARGET).log $(TARGET).out \
-	      $(TARGET).toc $(TARGET).lof $(TARGET).lot
+	$(MAKE) -C report clean
+	$(MAKE) -C presentation clean
 
-distclean: clean
-	rm -f $(TARGET).pdf
+distclean:
+	$(MAKE) -C report distclean
+	$(MAKE) -C presentation distclean

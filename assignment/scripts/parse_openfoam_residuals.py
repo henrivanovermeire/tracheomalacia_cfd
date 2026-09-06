@@ -127,7 +127,7 @@ def main():
         "--csv", default="assignment/data/postop_assignment4_residuals.csv", type=Path
     )
     parser.add_argument(
-        "--figure", default="report/figures/assignment4_residuals.tex", type=Path
+        "--figure", default="report/report/figures/assignment4_residuals.tex", type=Path
     )
     args = parser.parse_args()
     rows = parse_log(args.log)

@@ -113,11 +113,11 @@ def main():
     parser.add_argument("--density", type=float, default=1.204)
     parser.add_argument(
         "--image", type=Path,
-        default=Path("report/figures/assignment4_pressure_distribution.png"),
+        default=Path("report/report/figures/assignment4_pressure_distribution.png"),
     )
     parser.add_argument(
         "--plot", type=Path,
-        default=Path("report/figures/assignment4_centerline_pressure.tex"),
+        default=Path("report/report/figures/assignment4_centerline_pressure.tex"),
     )
     parser.add_argument(
         "--csv", type=Path,

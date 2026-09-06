@@ -37,7 +37,7 @@ partial pressure recovery, but pressure remains below the upstream trend because
 separation, mixing, and wall friction dissipate mechanical energy.
 
 ![Qualitative velocity and pressure behaviour through a
-constriction](../report/figures/assignment3_flow_behavior.pdf)
+constriction](../report/report/figures/assignment3_flow_behavior.pdf)
 
 ## Resistance
 

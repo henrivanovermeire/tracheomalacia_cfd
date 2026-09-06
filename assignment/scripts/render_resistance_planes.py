@@ -89,7 +89,7 @@ def main():
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("report/figures/assignment4_resistance_planes.png"),
+        default=Path("report/report/figures/assignment4_resistance_planes.png"),
     )
     parser.add_argument("--width", type=int, default=2200)
     parser.add_argument("--height", type=int, default=1800)

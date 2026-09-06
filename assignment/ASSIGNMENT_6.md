@@ -42,7 +42,7 @@ Versioned artifacts:
 
 - `assignment/data/breathing_waveform.csv`
 - `openFOAM/postop_transient/constant/breathingFlowRate.table`
-- `report/figures/assignment6_breathing_waveform.tex`
+- `report/report/figures/assignment6_breathing_waveform.tex`
 
 ## Numerical setup
 

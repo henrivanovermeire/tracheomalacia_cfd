@@ -34,5 +34,5 @@ def main():
     fields=list(rows[0]); csv_path=a.data_dir/"mesh_sensitivity.csv"; a.data_dir.mkdir(parents=True,exist_ok=True)
     with csv_path.open('w',newline='') as out: w=csv.DictWriter(out,fieldnames=fields); w.writeheader(); w.writerows(rows)
     (a.data_dir/"mesh_sensitivity.json").write_text(json.dumps({"schema_version":1,"reference_case":reference["case"],"difference_formula":"abs(value-reference)/abs(reference)*100","rows":rows},indent=2)+"\n")
-    plot(csv_path,Path("report/figures/assignment5_mesh_metrics.tex")); plot(csv_path,Path("report/figures/assignment5_mesh_differences.tex"),True); print(csv_path); print("Reference:",reference["case"])
+    plot(csv_path,Path("report/report/figures/assignment5_mesh_metrics.tex")); plot(csv_path,Path("report/report/figures/assignment5_mesh_differences.tex"),True); print(csv_path); print("Reference:",reference["case"])
 if __name__=="__main__": main()

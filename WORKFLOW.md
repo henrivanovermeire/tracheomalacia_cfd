@@ -291,15 +291,15 @@ render window.
 The common outputs are:
 
 ```text
-report/figures/<case>_segmentation.png
-report/figures/<case>_cfd_surface.png
+report/report/figures/<case>_segmentation.png
+report/report/figures/<case>_cfd_surface.png
 ```
 
 The measurement output is case-specific:
 
 ```text
-report/figures/preop_stenosis_measurement.png
-report/figures/postop_matched_section.png
+report/report/figures/preop_stenosis_measurement.png
+report/report/figures/postop_matched_section.png
 ```
 
 If measurement nodes are absent, the script still exports the segmentation and
@@ -402,7 +402,7 @@ HOME=/tmp pvpython assignment/scripts/render_mesh_comparison.py \
 ```
 
 The script converts each MSH file to temporary VTK data using Gmsh and writes
-full and carina-close-up surface-mesh images under `report/figures/`. The camera,
+full and carina-close-up surface-mesh images under `report/report/figures/`. The camera,
 framing, representation, and edge styling are identical between mesh levels.
 These panels illustrate surface refinement; the cell counts and CFD sensitivity
 metrics remain the evidence for volume-mesh refinement.
@@ -451,11 +451,89 @@ The full mode starts cleanly from time zero and simulates one 2 s cycle; it does
 not continue the pilot. A single cycle starting from rest is not automatically
 periodic. If corresponding start/end or consecutive-cycle metrics differ beyond
 the chosen tolerance, extend the simulation to another cycle before reporting a
-final periodic cycle. Open the fetched reconstruction with:
+final periodic cycle.
+
+### 13.1 Coarse-grid transient proof of concept
+
+If the selected \(0.15\,\mathrm{mm}\) transient case does not converge within the
+available time, use the preserved \(0.25\,\mathrm{mm}\) HXT mesh as an explicitly
+labelled proof of concept. Start with the timing run:
+
+```bash
+MAX_CO=2 MAX_DELTA_T=1e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --timing --coarse-poc
+```
+
+The `coarse-poc` profile creates the separate case
+`postop_transient_coarse_poc`; it never overwrites `postop_transient`. It uses
+`postop_hxt_025`, bounded first-order upwind convection, and two non-orthogonal
+correctors. Its conservative defaults are `maxCo=0.5` and `maxDeltaT=2e-5 s`,
+but the completed timing benchmark used the explicit overrides shown above. Preparation accepts either a
+fetched `results/postop_hxt_025/constant/polyMesh` or the preserved
+`openFOAM/postop_hxt_025/airways.msh`; the latter is converted and scaled on the
+compute host.
+
+Inspect the timing log before proceeding. If stable, run:
+
+```bash
+MAX_CO=2 MAX_DELTA_T=1e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --pilot --coarse-poc
+```
+
+Only attempt the complete cycle if the pilot remains stable:
+
+```bash
+MAX_CO=5 MAX_DELTA_T=2e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --full --coarse-poc
+```
+
+Preserve the failed selected-mesh logs. Results from the coarse profile may
+support the waveform implementation, qualitative phase-dependent flow fields,
+and workflow demonstration, but must not be described as mesh-independent
+transient predictions. The coarse mesh has two severely non-orthogonal faces and
+showed mesh-dependent steady resistance.
+
+Open the fetched reconstruction with:
 
 ```bash
 paraview results/postop_transient/postop_transient.foam
+# or the fallback case:
+paraview results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam
 ```
+
+### 13.2 Post-process the completed transient proof of concept
+
+Parse the large solver log with the streaming parser and extract fixed-plane
+metrics at all reconstructed times:
+
+```bash
+python3 assignment/scripts/parse_transient_log.py \
+  results/postop_transient_coarse_poc/log.pimpleFoam.full
+
+HOME=/tmp pvpython assignment/scripts/extract_transient_metrics.py \
+  results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam
+```
+
+Generate the convergence and complete-cycle figures:
+
+```bash
+python3 assignment/scripts/generate_transient_figures.py
+```
+
+Render the three common-scale velocity-vector panels:
+
+```bash
+for specification in "0.24 024" "0.50 050" "1.50 150"; do
+  set -- $specification
+  HOME=/tmp pvpython assignment/scripts/render_flow_vectors.py \
+    results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam \
+    --time "$1" --velocity-max 31 --glyph-stride 32 --glyph-scale 0.000113 \
+    --output "report/report/figures/assignment6_vectors_$2.png"
+done
+```
+
+The metric extractor masks resistance where the absolute section flow is below
+5% of its cycle peak. Do not interpret `R=DeltaP/Q` in those zero-flow intervals.
 
 ## 14. Run OpenFOAM
 
@@ -632,7 +710,7 @@ HOME=/tmp pvpython assignment/scripts/render_resistance_planes.py \
 
 This reads `assignment/data/resistance_sections.json`, converts its metre-based
 origins to the millimetre coordinates of the preserved Gmsh mesh, and writes
-`report/figures/assignment4_resistance_planes.png`. Blue denotes the superior
+`report/report/figures/assignment4_resistance_planes.png`. Blue denotes the superior
 upstream plane and orange the inferior downstream plane.
 
 ## 19. Reproducibility and generated files

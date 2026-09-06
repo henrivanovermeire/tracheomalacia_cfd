@@ -649,9 +649,11 @@ and Git commit are recorded in Table~\ref{tab:software}.
 \subsection{Transient solver and breathing waveform}
 \label{sec:transient_method}
 
-The selected \num{0.15}~mm HXT mesh is reused for the postoperative transient
-simulation. The incompressible, Newtonian equations are solved with
-\texttt{pimpleFoam}. A symmetric sinusoidal volumetric-flow boundary condition is
+The initially selected \num{0.15}~mm HXT mesh proved computationally
+impractical for the complete postoperative cycle. The final transient analysis
+is therefore an explicitly labelled proof of concept on the existing
+\num{0.25}~mm HXT mesh (180,163 tetrahedra). The incompressible, Newtonian
+equations are solved with \texttt{pimpleFoam}. A symmetric sinusoidal volumetric-flow boundary condition is
 prescribed at the tracheal inlet,
 \begin{equation}
   Q(t)=Q_{\max}\sin\left(\frac{2\pi t}{T}\right),
@@ -666,18 +668,17 @@ tidal volume of \SI{66.7}{\milli\litre}, consistent with the assumed
 The inlet uses \texttt{flowRateInletVelocity}. All three outlets have zero fixed
 kinematic pressure and \texttt{pressureInletOutletVelocity}, which permits flow
 reversal during expiration. The rigid airway wall remains no-slip. Time is
-discretised with the second-order backward scheme. Three PIMPLE outer correctors,
-two pressure correctors, and one non-orthogonal corrector are used. An initial
-time step of \SI{1e-5}{\second} is adjusted subject to $\mathrm{Co}_{\max}=2$
-and a maximum step of \SI{5e-5}{\second}; fields are written every
-\SI{0.02}{\second}. The original $\mathrm{Co}_{\max}=1$ timing test was rejected
-because a small subset of cells forced the step below \SI{1e-5}{\second} while
-the mean Courant number remained below 0.08. A \SI{0.05}{\second} timing run and
-a subsequent pilot through \SI{0.55}{\second} precede the complete cycle. Pilot
-results determine whether these controls are adequate;
-periodicity cannot be claimed from a single cycle and will be assessed by
-comparing corresponding quantities in consecutive cycles if an additional cycle
-is required.
+discretised with the second-order backward scheme and bounded first-order upwind
+convection. Three PIMPLE outer correctors, two pressure correctors, and two
+non-orthogonal correctors are used. An initial time step of
+\SI{1e-5}{\second} is adjusted subject to $\mathrm{Co}_{\max}=5$ and a maximum
+step of \SI{2e-4}{\second}; fields are written every \SI{0.02}{\second}. A
+conservative timing run at $\mathrm{Co}_{\max}=2$ established stable coupling,
+but projected runtime remained prohibitive. The final $\mathrm{Co}_{\max}=5$
+case completed on eight MPI ranks in \SI{65095}{\second} wall time. This elevated
+Courant limit, coarse mesh, and diffusive convection scheme permit workflow and
+phase-trend assessment but preclude claims of temporal or spatial independence.
+Periodicity also cannot be claimed from the single cycle starting from rest.
 
 At the estimated peak mean velocity of approximately
 \SI{20.3}{\metre\per\second} in the matched section, the Mach number is about
@@ -706,15 +707,15 @@ $\mathrm{Ma}=0.1$ compressibility threshold.
     \midrule
     Solver & \texttt{pimpleFoam} \\
     Breathing-cycle duration & \SI{2.0}{\second} \\
-    Initial / maximum time step & \SI{1e-5}{\second} / \SI{5e-5}{\second} \\
-    Maximum Courant number & 2.0 \\
+    Mesh & HXT, \SI{0.25}{\milli\metre}, 180,163 tetrahedra \\
+    Initial / maximum time step & \SI{1e-5}{\second} / \SI{2e-4}{\second} \\
+    Maximum Courant number & 5.0 \\
     Field write interval & \SI{0.02}{\second} \\
-    Timing / pilot intervals & \SI{0.05}{\second} / \SI{0.55}{\second} \\
-    Simulated cycles & One initially; extend if not periodic \\
-    PIMPLE correctors & Up to 3 outer, 2 pressure, 1 non-orthogonal \\
+    Simulated cycles & One, starting from rest \\
+    PIMPLE correctors & Up to 3 outer, 2 pressure, 2 non-orthogonal \\
     Outer stopping targets & $2\times10^{-3}$ ($U$), $10^{-2}$ ($p$) \\
     Linear-equation tolerance & $10^{-8}$ ($U$ and $p$) \\
-    Parallel decomposition & Scotch, 48 MPI ranks \\
+    Parallel decomposition & Scotch, 8 MPI ranks \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1019,58 +1020,85 @@ velocities were \SI{6.53}{\metre\per\second} and
 
 \subsection{Time-step convergence}
 
-At the time of report assembly, the full \SI{2}{\second} calculation on the
-selected \num{0.15}~mm HXT mesh was running on 48 MPI ranks. Startup tests showed
-that adaptive stepping maintained the maximum Courant number close to the target
-of 2 while the mean remained substantially lower. Final linear-solver residuals
-were typically of order $10^{-9}$ and final global continuity errors of order
-$10^{-12}$. Some startup steps did not satisfy the configured outer PIMPLE
-criterion within three correctors. The final log must therefore be parsed before
-claiming complete time-step convergence or periodicity; no incomplete transient
-quantity is substituted by extrapolation.
+The complete cycle comprised 355,016 adaptive timesteps. Of these, 354,399
+(99.826\%) satisfied the PIMPLE outer criterion and 617 reached the limit of
+three correctors. The latter were localized around zero-flow transitions: 180
+near startup, 309 around the inspiration--expiration reversal at
+$t=\SI{1}{\second}$, and 128 near cycle end; no failures occurred over the main
+high-flow intervals. The maximum Courant number was 5.296 and the mean Courant
+number never exceeded 0.540. The timestep varied from
+\SI{3.287e-6}{\second} to \SI{2.019e-4}{\second}. Final equation residuals were
+typically of order $10^{-9}$, while the maximum absolute cumulative continuity
+error was $5.25\times10^{-4}$. Thus the run remained bounded and predominantly
+converged, but reversal-adjacent states and precise transient extrema are
+interpreted cautiously.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][5.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: transient residuals and convergence status per time step}}
-  \caption{Residual evolution for the postoperative transient simulation.
-  Highlight any time steps that did not satisfy the selected criterion.}
+  \resizebox{0.92\textwidth}{!}{\input{figures/assignment6_convergence.tex}}
+  \caption{Adaptive timestep behaviour over the postoperative proof-of-concept
+  cycle. Red markers denote sampled timesteps that reached three PIMPLE outer
+  correctors without meeting the selected outer criterion. These events cluster
+  around zero-flow transitions rather than peak-flow intervals.}
   \label{fig:transient_residuals}
 \end{figure}
 
 \subsection{Velocity vectors at representative phases}
 
-Select three time points from the imposed breathing waveform, for example
-acceleration, peak inspiratory flow, and deceleration or flow reversal. The
-exact selection must be justified from the waveform rather than chosen only for
-visual appearance.
+Three saved states were selected directly from the waveform:
+$t=\SI{0.24}{\second}$ represents accelerating inspiration at approximately
+68.5\% of peak flow, $t=\SI{0.50}{\second}$ is peak inspiration, and
+$t=\SI{1.50}{\second}$ is peak expiration. The two peak states isolate reversal
+of the velocity field at equal flow magnitude, while the accelerating state
+shows development of the inspiratory jet.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][6.5cm][c]{0.88\textwidth}{\centering
-    Placeholder: velocity vectors coloured by magnitude at three relevant time
-    points using a common colour scale}}
-  \caption{Postoperative transient velocity vectors at three phases of the
-  breathing cycle. State each time and inlet flow rate.}
+  \begin{subfigure}[t]{0.48\textwidth}
+    \includegraphics[width=\linewidth]{assignment6_vectors_024.png}
+    \caption{$t=\SI{0.24}{\second}$; $Q=\SI{4.30}{\litre\per\minute}$.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.48\textwidth}
+    \includegraphics[width=\linewidth]{assignment6_vectors_050.png}
+    \caption{$t=\SI{0.50}{\second}$; $Q=\SI{6.29}{\litre\per\minute}$.}
+  \end{subfigure}
+
+  \medskip
+  \begin{subfigure}[t]{0.48\textwidth}
+    \includegraphics[width=\linewidth]{assignment6_vectors_150.png}
+    \caption{$t=\SI{1.50}{\second}$; $Q=\SI{-6.29}{\litre\per\minute}$.}
+  \end{subfigure}
+  \caption{Postoperative transient velocity vectors using one anatomical frontal
+  view and a common \SIrange{0}{31}{\metre\per\second} scale. The third panel
+  demonstrates reversal during expiration.}
   \label{fig:transient_vectors}
 \end{figure}
 
 \subsection{Breathing waveform and time-varying resistance}
 
-The applied inlet flow rate and the local resistance from
-Equation~\ref{eq:local_resistance} are evaluated over one complete breathing
-cycle. The computational postoperative resistance is compared with the
-constant-diameter expectation and with a qualitative preoperative sketch.
+The applied section flow and local pressure difference were evaluated on the
+same planes as Assignment 4 at all 100 nonzero saved times. Flow ranged from
+\SI{-6.288}{\litre\per\minute} to \SI{6.288}{\litre\per\minute}, and pressure
+drop ranged from \SI{-58.70}{\pascal} to \SI{167.45}{\pascal}. Resistance was
+masked where $|Q|$ was below 5\% of peak flow because division by a near-zero
+flow is ill-conditioned. Over the retained states it ranged from
+\SI{5.71}{\pascal\per\litre\per\minute} to
+\SI{26.63}{\pascal\per\litre\per\minute}. Unlike ideal constant Poiseuille
+resistance, the patient-specific result depends on flow direction and phase due
+to developing flow, curvature, branching, separation, and unsteady inertia.
+The preoperative airway was not simulated transiently; its 64.9\% area
+constriction supports only a qualitative expectation of higher resistance.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][7cm][c]{0.88\textwidth}{\centering
-    Placeholder: (A) applied breathing flow waveform; (B) computed postoperative
-    local resistance; (C) qualitative preoperative/postoperative resistance
-    comparison}}
-  \caption{Breathing-cycle flow rate and local resistance. Resistance near zero
-  flow must be handled carefully because direct division by $Q(t)$ becomes
-  ill-conditioned.}
+  \resizebox{0.92\textwidth}{!}{\input{figures/assignment6_cycle_response.tex}}
+  \caption{Complete-cycle section flow, local pressure difference, and
+  postoperative local resistance. Resistance is omitted when
+  $|Q|<\SI{0.314}{\litre\per\minute}$ (5\% of peak flow). The dashed line is the
+  steady coarse-mesh resistance at \SI{2}{\litre\per\minute}; it is a reference,
+  not an expected constant for this patient-specific unsteady flow. The
+  arbitrary-unit comparison is explicitly conceptual: only the postoperative
+  cycle was simulated transiently.}
   \label{fig:transient_resistance}
 \end{figure}
 
@@ -1115,13 +1143,30 @@ convergence and computational efficiency.
 \subsection{Constant-diameter resistance during inspiration}
 
 For fully developed laminar flow in a rigid constant-diameter tube,
-Poiseuille's law gives $\Delta P=128\mu LQ/(\pi D^4)=RQ$. Geometry and fluid
-properties are constant, so increasing inspiratory flow produces a proportional
-pressure drop while $R=\Delta P/Q$ remains constant. Patient-specific curvature,
-developing flow, bifurcation, separation, and inertial losses can instead make
-pressure drop nonlinear in flow. Transient inertia can also create phase
-differences between pressure and flow, so instantaneous resistance need not
-remain constant.
+Poiseuille's law gives $\Delta P=128\mu LQ/(\pi D^4)=RQ$. The viscous pressure
+loss therefore increases linearly with flow, but $R=\Delta P/Q$ remains constant.
+Thus, it would be imprecise to attribute the observed increase in effective
+resistance to linear viscous friction alone.
+
+A useful reduced description of the patient-specific transient pressure loss is
+
+\begin{equation}
+  \Delta P(t)=aQ(t)+b|Q(t)|Q(t)+L_f\frac{\mathrm{d}Q}{\mathrm{d}t},
+  \label{eq:nonlinear_pressure_loss}
+\end{equation}
+
+where $aQ$ represents approximately linear viscous loss, $b|Q|Q$ represents
+flow-dependent convective and form losses, and $L_f\,\mathrm{d}Q/\mathrm{d}t$
+represents fluid inertance. Dividing by $Q$ away from flow reversal gives an
+apparent resistance containing $a+b|Q|$ and an acceleration-dependent term.
+Consequently, effective resistance can rise with inspiratory flow as jets,
+developing profiles, curvature, branching, and separation increase dissipation.
+This is consistent with the computed inspiratory increase from approximately
+\SI{12.3}{\pascal\per\litre\per\minute} at \SI{0.40}{\litre\per\minute} to
+\SI{26.6}{\pascal\per\litre\per\minute} near peak inspiration. The lower and
+asymmetric expiratory branch is physically possible for reversed flow through a
+non-symmetric geometry, but its magnitude remains sensitive to inertia, outlet
+conditions, the initial cycle, and the coarse high-Courant discretisation.
 
 \subsection{Limitations}
 
@@ -1130,7 +1175,7 @@ Potential limitations include:
 \begin{itemize}
   \item static CT geometry despite the dynamic nature of tracheomalacia;
   \item rigid airway walls and absence of fluid--structure interaction;
-  \item steady inlet flow instead of a respiratory waveform;
+  \item an idealised sinusoidal waveform rather than a measured patient-specific waveform;
   \item idealised outlet pressure conditions;
   \item uncertainty from segmentation and clipping-point placement;
   \item an isotropic first-order tetrahedral mesh without dedicated prism
@@ -1149,19 +1194,42 @@ and section-area variation should be tracked alongside each physical metric.
 
 \subsection{Handling transient non-convergence}
 
-[Identify unconverged time steps and discuss targeted remedies: reduce the time
-step, constrain the Courant number, increase inner iterations/correctors,
-improve mesh quality, use a better initial condition from a previous cycle, and
-simulate additional cycles until periodic behaviour is obtained. Report which
-changes would be tested first and why.]
+The 617 outer-criterion failures were concentrated around startup and the two
+zero-flow transitions, where pressure and velocity fields must adjust while the
+flow changes direction. The first remedy would be to repeat those intervals with
+a lower Courant limit, because this directly improves temporal resolution and
+pressure--velocity coupling. If failures persisted, the number of outer or
+pressure correctors would be increased. A converged previous cycle would provide
+a better initial condition than rest, and additional cycles would be simulated
+until corresponding phase metrics became periodic. Finally, the cells identified
+by the three failed \texttt{checkMesh} checks should be repaired before a
+quantitative production run. These changes target the observed causes without
+misrepresenting the present proof-of-concept result.
 
 % -----------------------------------------------------------------------------
 \section{Conclusions}
 \label{sec:conclusions}
 
-[Summarise the principal quantitative findings, state whether the intervention
-improved the simulated flow characteristics, and report whether the conclusions
-were robust to mesh refinement.]
+The preoperative minimum lumen area was \SI{1.813}{\milli\metre\squared},
+compared with \SI{5.169}{\milli\metre\squared} at the corresponding
+postoperative location, giving a 64.9\% area constriction and demonstrating a
+substantial anatomical increase after intervention. Steady postoperative CFD at
+\SI{2}{\litre\per\minute} predicted a local pressure drop of
+\SI{30.95}{\pascal}, resistance of
+\SI{15.41}{\pascal\per\litre\per\minute}, peak velocity of
+\SI{9.25}{\metre\per\second}, and a geometry-driven 73.17/26.83\% right/left
+flow split. The \num{0.15}~mm HXT mesh was selected for steady analysis because
+its monitored metrics differed from the densest mesh by at most 2.02\% while
+avoiding its convergence and cost penalty.
+
+A complete postoperative transient proof of concept produced the prescribed
+$\pm\SI{6.283}{\litre\per\minute}$ cycle and direction-dependent resistance
+between \SI{5.71}{\pascal\per\litre\per\minute} and
+\SI{26.63}{\pascal\per\litre\per\minute} outside masked zero-flow intervals.
+Although 99.826\% of timesteps met the PIMPLE criterion, the coarse mesh,
+$\mathrm{Co}_{\max}=5$, failed mesh-quality checks, and absence of timestep
+independence limit this result to qualitative phase trends. The anatomical and
+steady integral conclusions are therefore stronger than the transient extrema.
 
 % -----------------------------------------------------------------------------
 \section*{Reproducibility statement}
@@ -1173,6 +1241,159 @@ cell counts, and solver settings used for the final results. The scripts
 \texttt{create\_volume\_mesh.sh}, \texttt{run\_cfd.sh},
 \texttt{run\_fine\_cfd.sh}, and \texttt{fetch\_cfd\_results.sh} automate the
 meshing, remote execution, reconstruction, and retrieval stages.
+
+% -----------------------------------------------------------------------------
+% Appendices
+% -----------------------------------------------------------------------------
+\clearpage
+\appendix
+
+\section{OpenFOAM}
+\label{app:openfoam}
+
+OpenFOAM is an open-source computational continuum-mechanics framework that
+uses the finite-volume method. Conservation equations are integrated over each
+mesh cell and the divergence theorem converts volume derivatives into fluxes
+through its faces. Interpolation and gradient schemes provide face values from
+cell-centred quantities, producing sparse algebraic systems for velocity
+$\mathbf{U}$ and pressure $p$ \cite{openfoam}. OpenFOAM uses kinematic pressure
+for incompressible flow,
+
+\begin{equation}
+  p=\frac{P}{\rho},
+\end{equation}
+
+with units of \si{\metre\squared\per\second\squared}; dimensional pressure
+differences in this report are therefore recovered from
+$\Delta P=\rho\,\Delta p$. For incompressible Newtonian laminar flow, the
+solvers considered here discretise
+
+\begin{align}
+  \nabla\cdot\mathbf{U} &= 0, \\
+  \frac{\partial\mathbf{U}}{\partial t}
+  +\nabla\cdot(\mathbf{U}\mathbf{U})
+  &= -\nabla p
+     +\nabla\cdot\left[\nu\left(\nabla\mathbf{U}
+     +\nabla\mathbf{U}^{T}\right)\right].
+\end{align}
+
+The transient term is omitted in a steady calculation. Pressure and velocity
+are coupled physically but solved in a segregated manner. A discretised
+momentum equation may be written schematically as
+
+\begin{equation}
+  A_U\mathbf{U}=\mathbf{H}(\mathbf{U})-\nabla p.
+\end{equation}
+
+Using the reciprocal diagonal coefficient $r_{AU}=1/A_U$ gives a predicted
+velocity and face flux. Requiring the corrected flux to be divergence-free
+then produces a pressure equation of the form
+
+\begin{equation}
+  \nabla\cdot\left(r_{AU}\nabla p\right)
+  =\nabla\cdot\boldsymbol{\phi}_{H/A}.
+\end{equation}
+
+The resulting pressure correction updates both velocity and face flux, thereby
+progressively enforcing mass conservation. On a non-orthogonal mesh, pressure
+correction is repeated so that explicitly treated non-orthogonal contributions
+are updated before the final conservative flux correction.
+
+\subsection{The \texttt{simpleFoam} solver}
+
+\texttt{simpleFoam} is a steady-state incompressible solver. It uses the SIMPLE
+algorithm: (1) assemble and solve the momentum equations using the current
+pressure; (2) construct and solve a pressure-correction equation; (3) correct
+pressure, velocity, and face flux; (4) update boundary conditions; and (5)
+repeat until convergence. Its iterations are numerical fixed-point iterations
+and do not represent physical time. Under-relaxation limits field changes
+between iterations and can stabilise pressure--velocity coupling.
+
+In this study, pressure is solved using GAMG and velocity with
+\texttt{smoothSolver} using symmetric Gauss--Seidel smoothing. Two
+non-orthogonal correctors are applied in the steady case. The SIMPLE residual
+controls are $10^{-5}$ for pressure and $10^{-6}$ for velocity. The Assignment
+4 postoperative solution met these criteria after 589 iterations. Convergence
+is additionally assessed through integrated inlet/outlet flow because small
+algebraic residuals alone do not guarantee conservation of the reported
+quantity.
+
+\subsection{The \texttt{pimpleFoam} solver}
+
+\texttt{pimpleFoam} advances the incompressible equations through physical time
+using PIMPLE, which combines SIMPLE-like outer iterations with PISO-like inner
+pressure correctors. At each new time level, time-dependent boundary conditions
+are updated and a momentum equation is assembled. Each outer corrector updates
+the nonlinear momentum terms; within it, pressure correctors repeatedly enforce
+continuity and update $p$, $\mathbf{U}$, and the face flux. More correctors can
+improve coupling at a timestep but increase its computational cost.
+
+The selected-mesh transient configuration uses the second-order backward time
+scheme, at most three outer correctors, two pressure correctors, and one
+non-orthogonal corrector. Its timestep is adjusted to limit the maximum Courant
+number,
+
+\begin{equation}
+  \mathrm{Co}=\frac{|\mathbf{U}|\,\Delta t}{\Delta x},
+\end{equation}
+
+where a smaller limit improves temporal resolution but requires more steps. The
+coarse proof-of-concept configuration instead uses bounded upwind convection
+and two non-orthogonal correctors; its Courant limit is recorded with the final
+results because it was varied during timing tests.
+
+An OpenFOAM linear-solver \emph{initial residual} is the normalised algebraic
+defect before an individual equation solve, whereas its final residual is the
+defect after that solve. These residuals do not directly measure discretisation
+error or physiological accuracy. PIMPLE outer residual controls assess whether
+the coupled fields reach their per-timestep targets, here
+$2\times10^{-3}$ for velocity and $10^{-2}$ for pressure. If these targets are
+not met within three outer correctors, \texttt{pimpleFoam} prints
+\texttt{PIMPLE: not converged within 3 iterations}; it nevertheless retains the
+latest corrected fields and advances. Such a timestep therefore has a computed
+solution, but did not satisfy the selected nonlinear stopping criterion. The
+frequency of these events, linear residuals, continuity errors, Courant number,
+and monitored flow quantities must all be considered when judging the result.
+
+\section{Parallel computation with the Message Passing Interface}
+\label{app:mpi}
+
+The Message Passing Interface (MPI) is a standard for communication between
+independent processes, called ranks. Each rank has separate memory and performs
+local calculations while exchanging explicitly required data with other ranks.
+OpenFOAM couples MPI to spatial domain decomposition: \texttt{decomposePar}
+reads \texttt{decomposeParDict} and partitions the finite-volume mesh into one
+subdomain per rank. The Scotch method used here partitions the mesh graph
+automatically, seeking a similar cell count per rank while limiting the number
+of faces cut between subdomains.
+
+A cut internal face becomes a pair of coupled \texttt{processor} patches on the
+two adjacent ranks. These are numerical interfaces, not physical airway
+boundaries. Before interpolation, gradient evaluation, or sparse matrix
+multiplication requires a neighbouring value, ranks exchange interface or
+``halo'' data. Fluxes across processor patches are coupled so that the parallel
+calculation preserves the same conservation law as the undecomposed mesh.
+
+Some operations require collective communication across every rank. Global
+sums are used for residual normalisation, continuity errors, convergence tests,
+and integrated fluxes. GAMG also communicates during restriction to coarser
+levels, coarse-grid solution, and prolongation. Communication and
+synchronisation become relatively expensive when each rank owns too few cells;
+therefore doubling the number of ranks does not generally halve runtime. A good
+partition balances cell counts while minimising processor interfaces, but the
+most efficient rank count must ultimately be established by timing a
+representative calculation. This consideration motivated testing fewer ranks
+for the approximately 180,000-cell coarse transient proof of concept.
+
+During a parallel run, each rank writes its fields beneath
+\texttt{processor0}, \texttt{processor1}, and subsequent processor directories.
+After simulation, \texttt{reconstructPar} maps these distributed fields back to
+the original undecomposed mesh for serial post-processing and ParaView.
+Reconstruction changes the storage layout, not the numerical solution. The
+project scripts consequently decompose before execution, launch
+\texttt{simpleFoam} or \texttt{pimpleFoam} through \texttt{mpirun}, reconstruct
+the retained time directories, and omit bulky processor directories when
+fetching results.
 
 % -----------------------------------------------------------------------------
 % References
