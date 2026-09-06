@@ -1,0 +1,44 @@
+{
+    "wall": {
+        "patch_name": "wall",
+        "entity_id": 1
+    },
+    "caps": {
+        "airwaycutendpoint_4": {
+            "label": "AirwayCutEndpoint-4",
+            "entity_id": 2,
+            "barycenter_ras": [
+                4.243694133758545,
+                10.594258022308349,
+                -21.24253879547119
+            ]
+        },
+        "airwaycutendpoint_3": {
+            "label": "AirwayCutEndpoint-3",
+            "entity_id": 3,
+            "barycenter_ras": [
+                21.920736083984377,
+                -15.931073055267333,
+                -62.40108375549316
+            ]
+        },
+        "airwaycutendpoint_2": {
+            "label": "AirwayCutEndpoint-2",
+            "entity_id": 4,
+            "barycenter_ras": [
+                -5.356344165802002,
+                -20.45438678741455,
+                -68.67375595092773
+            ]
+        },
+        "airwaycutendpoint_1": {
+            "label": "AirwayCutEndpoint-1",
+            "entity_id": 5,
+            "barycenter_ras": [
+                15.168216800689697,
+                -19.224306373596193,
+                -72.58681091308594
+            ]
+        }
+    }
+}

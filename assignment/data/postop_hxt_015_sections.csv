@@ -1,0 +1,4 @@
+name,role,area_m2,area_average_kinematic_pressure_m2_s2,flow_rate_m3_s,area_average_axial_velocity_m_s,peak_velocity_magnitude_m_s
+superior,upstream boundary of the anatomically matched region,7.2029661735251345e-06,64.49194593453116,3.3445771718755464e-05,4.643333164840769,5.863637581609494
+matched,postoperative section corresponding to the preoperative minimum,5.1618447483775255e-06,33.803672627055505,3.341114080845232e-05,6.472713232794174,9.67048422371793
+inferior,downstream boundary of the anatomically matched region,6.09467153931208e-06,35.24375708961296,3.346030012151918e-05,5.490090795819314,9.416130847696948

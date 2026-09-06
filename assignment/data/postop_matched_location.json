@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "case": "postop",
+  "matching_method": "preoperative normalized centerline distance from tracheal inlet to carina",
+  "preop_relative_distance_from_inlet": 0.7653256759696391,
+  "preop_relative_distance_to_carina": 0.23467432403036093,
+  "postop_tracheal_centerline_length_mm": 52.54866862515156,
+  "postop_distance_from_inlet_mm": 40.21684533684868,
+  "postop_distance_to_carina_mm": 12.331823288302878,
+  "matched_section_ras_mm": [
+    5.021986530882967,
+    112.06829872607256,
+    1335.4041702046213
+  ],
+  "matched_section_normal_ras": [
+    0.22076353891514097,
+    -0.5436907854039204,
+    -0.8097306896447307
+  ],
+  "mapped_stenosis_endpoints": [
+    {
+      "label": "StenosisSuperior",
+      "relative_distance_from_inlet": 0.5749352815212628,
+      "distance_from_inlet_mm": 30.212083589569062,
+      "ras_mm": [
+        2.853499860220318,
+        116.8310920102137,
+        1343.8994754955497
+      ]
+    },
+    {
+      "label": "StenosisInferior",
+      "relative_distance_from_inlet": 0.8233593118914491,
+      "distance_from_inlet_mm": 43.26643564001657,
+      "ras_mm": [
+        5.577990489862471,
+        110.49262718796665,
+        1332.8631346384245
+      ]
+    }
+  ],
+  "postop_inlet_ras_mm": [
+    -1.014448642730713,
+    133.36572265625,
+    1366.7607421875
+  ],
+  "postop_carina_ras_mm": [
+    7.079829216003418,
+    106.96163177490234,
+    1324.4560546875
+  ],
+  "postop_carina_rule": "degree>=3 network branch spatially closest to AirwaySeed",
+  "airway_seed_ras_mm": [
+    5.870349611295694,
+    108.31885395681064,
+    1327.7000000000019
+  ],
+  "airway_seed_to_carina_distance_mm": 3.7186118587143095
+}

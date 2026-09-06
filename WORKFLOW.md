@@ -1,0 +1,758 @@
+# Airway CFD workflow
+
+This document describes the complete path from a CT scan to an OpenFOAM result:
+
+```text
+DICOM
+  → 3D Slicer airway segmentation
+  → centerline and refined cutting points
+  → clipped airway with flow extensions and flat caps
+  → STL export
+  → Gmsh tetrahedral volume mesh
+  → OpenFOAM simpleFoam simulation
+  → reconstructed results
+  → ParaView
+```
+
+The repository currently supports two anatomical cases, `postop` and `preop`. The postoperative OpenFOAM case is the configured baseline used in the commands below.
+
+## 1. Requirements
+
+### Local workstation
+
+- 3D Slicer 5.12.2
+- SlicerVMTK extension
+- Gmsh
+- Git
+- OpenSSH client
+- `rsync`
+- ParaView
+
+On an Arch Linux workstation, install the command-line dependencies using the appropriate system packages. Confirm that these commands are available:
+
+```bash
+gmsh --version
+ssh -V
+rsync --version
+paraview --version
+```
+
+### Remote CFD host
+
+The remote host needs:
+
+- Docker
+- Git
+- `rsync`
+- The cloned repository
+- The Docker image `opencfd/openfoam-default:latest`
+
+For reproducible provenance, record the immutable image digest at execution
+time. The historical runs in this project retained the mutable `latest` tag but
+not its digest, so exact container-image reproduction cannot be claimed.
+
+Example Ubuntu setup:
+
+```bash
+sudo apt update
+sudo apt install -y docker.io git rsync
+sudo systemctl enable --now docker
+docker pull opencfd/openfoam-default:latest
+```
+
+The scripts assume the remote repository is located at:
+
+```text
+/root/tracheomalacia_cfd
+```
+
+Override this with `REMOTE_REPO` if necessary.
+
+## 2. Select the anatomical case in Slicer
+
+`segment_airway.py` is the sole case selector. Set its `CASE` value to either:
+
+```python
+CASE = "postop"
+```
+
+or:
+
+```python
+CASE = "preop"
+```
+
+The script stores this value as the `AirwayCase` attribute on the live
+`AirwayLungSegmentation` node. Centerline, cutting-point, clipping, and export
+scripts read that tag automatically; do not set a second downstream case
+variable. Start from a fresh Slicer scene when changing cases. Case-specific
+inputs are stored under:
+
+```text
+segmentation/assets/<case>/
+```
+
+The expected markup and configuration files include:
+
+- `AirwaySeed.json`
+- `CenterlineEndpoints.json`
+- `refined_endpoints.json`
+- `segmentation_settings.json`
+
+## 3. Segment the airway
+
+Run the segmentation script from the Slicer Python console:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
+```
+
+Inspect the segmentation in 2D and 3D. Confirm that:
+
+- The trachea is connected through any stenosis.
+- The required bronchi are present.
+- Lung parenchyma and exterior air have not become part of the intended final airway model.
+
+Segmentation thresholds and seed coordinates are case-specific.
+
+For the preoperative case, the permissive HU range intentionally preserves the
+narrow stenosis but may also include the lungs. After manually cleaning the
+`Airways` segment and exporting it as
+`segmentation/assets/preop/AirwayLungSegmentation.seg.nrrd`, replace the live
+scene node with that file by running:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/remove_lungs.py").read())
+```
+
+This is a data substitution only. It keeps the node name
+`AirwayLungSegmentation` and segment name `Airways`, so all downstream scripts
+continue from the loaded scene node without another save/reload cycle.
+
+## 4. Prepare centerline endpoints for a new case
+
+If `segmentation/assets/<case>/CenterlineEndpoints.json` does not exist, run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/prepare_centerline_endpoints.py").read())
+```
+
+Place four anatomy-specific points: one proximal tracheal endpoint and one at
+each of the three retained distal branch ends. Export the completed markup as
+`segmentation/assets/<case>/CenterlineEndpoints.json`. Never copy endpoint
+coordinates from the other anatomy.
+
+## 5. Calculate the centerline
+
+Run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
+```
+
+This creates the centerline/network used to orient clipping and flow extensions. The clipping workflow expects the model node:
+
+```text
+AirwayNetworkModel
+```
+
+## 6. Prepare or load refined cutting points
+
+For a new case without `refined_endpoints.json`, run
+`prepare_cutting_points.py`, place the four desired CFD cut points, and export
+the node to `segmentation/assets/<case>/refined_endpoints.json`. In that same
+scene, proceed directly to clipping because the clipping script reuses the
+adjusted node.
+
+For an existing exported markup, run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
+```
+
+This creates or replaces the markup node:
+
+```text
+AirwayCutEndpoints
+```
+
+Review every point in the Slicer UI. Move points as needed so each cut is made at a suitable airway cross-section. These refined points are deliberately separate from the original `CenterlineEndpoints` used during centerline extraction.
+
+## 7. Clip, extend, and cap the airway
+
+Run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/cut_airways_centerline.py").read())
+```
+
+The script uses SlicerVMTK `ClipVesselLogic`, matching the interactive Clip Vessel workflow:
+
+- Surface: airway segmentation surface
+- Centerline: `AirwayNetworkModel`
+- Clipping points: `AirwayCutEndpoints`
+- Flow extensions: enabled
+- Extension direction: centerline direction
+- Extension radius: adaptive to the local cross-section
+- Final CFD caps: flat
+
+The final combined model is:
+
+```text
+AirwayExtendedSurfaceCapped
+```
+
+Inspect the model before export. In particular, verify that all four ends have straight, natural extensions and planar caps.
+
+## 8. Export the CFD surface
+
+Run in the Slicer Python console:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segmentation.py").read())
+```
+
+This triangulates and cleans a copy of `AirwayExtendedSurfaceCapped` and writes:
+
+```text
+meshes/<case>/airways.stl
+```
+
+The STL coordinates are in millimetres. `run_cfd.sh` scales the converted OpenFOAM mesh to metres.
+
+## 9. Measure the preoperative stenosis
+
+After calculating the preoperative centerline and loading the cleaned live
+segmentation, run:
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/measure_stenosis.py").read())
+```
+
+The script projects `StenosisEndpoints.json` onto `AirwayNetworkModel`, measures
+the centerline arc length, samples centerline-normal lumen sections, and creates
+`PreopStenosisCenterlineSegment`, `PreopMinimumCrossSection`, and
+`PreopMinimumSection` for visual inspection. It writes the full profile and
+summary to `assignment/data/`.
+
+## 10. Complete Slicer command sequences and report images
+
+Run each case from a fresh Slicer scene. Before starting, set `CASE` in
+`segment_airway.py` to the required anatomy. Do not change case variables in the
+downstream scripts: they read the `AirwayCase` scene attribute.
+
+### 10.1 Preoperative sequence
+
+The preoperative flow substitutes the manually cleaned segmentation before
+centerline extraction. Stenosis measurement must precede
+`tracheal_landmarks.py`, because the landmark script uses the measured minimum
+to store its normalized inlet-to-carina location.
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/remove_lungs.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/measure_stenosis.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/tracheal_landmarks.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/cut_airways_centerline.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segmentation.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_report_figures.py").read())
+```
+
+Inspect the carina selected by `tracheal_landmarks.py`: the preoperative script
+intentionally skips the two pseudolumen branch nodes and selects the following
+anatomical bifurcation.
+
+### 10.2 Postoperative sequence
+
+The postoperative matched region depends on the normalized location previously
+written by the completed preoperative workflow. Run
+`show_postop_corresponding_region.py` before `measure_stenosis.py` so
+`postop_matched_location.json` exists.
+
+```python
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/segment_airway.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/calculate_centerline.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/show_postop_corresponding_region.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/measure_stenosis.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/load_cutting_points.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/cut_airways_centerline.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_segmentation.py").read())
+exec(open("/home/hvoverme/tracheomalacia_cfd/segmentation/scripts/export_report_figures.py").read())
+```
+
+### 10.3 Screenshot export
+
+`export_report_figures.py` operates on the live MRML scene and must therefore be
+run before closing or clearing Slicer. It hides unrelated display nodes,
+temporarily switches to Slicer's one-up 3D layout, configures an anatomical
+frontal parallel-projection camera, captures the native render window, and
+restores the previous layout, camera, and display state afterward. Native capture
+is used because VTK magnified capture can produce tiled artifacts in Slicer's Qt
+render window.
+
+The common outputs are:
+
+```text
+report/report/figures/<case>_segmentation.png
+report/report/figures/<case>_cfd_surface.png
+```
+
+The measurement output is case-specific:
+
+```text
+report/report/figures/preop_stenosis_measurement.png
+report/report/figures/postop_matched_section.png
+```
+
+If measurement nodes are absent, the script still exports the segmentation and
+CFD surface and prints which measurement objects were missing. Review all images
+before accepting them; automated framing does not replace anatomical inspection.
+
+## 11. Verify Gmsh physical surfaces
+
+`meshes/<case>/airways.geo` imports the case-specific `airways.stl`, classifies its surfaces, creates a volume, and assigns physical groups.
+
+The required physical surfaces are:
+
+```text
+inlet
+outlet_1
+outlet_2
+outlet_3
+wall
+```
+
+The required volume is:
+
+```text
+fluid
+```
+
+For the currently inspected postoperative geometry, the elementary-surface mapping is documented in `meshes/postop/airways.geo` as:
+
+```geo
+inlet[]   = {25}; // tracheal inlet
+outlet1[] = {23}; // right superior lobar bronchus
+outlet2[] = {24}; // right inferior lobar bronchus
+outlet3[] = {22}; // left main bronchus
+```
+
+These elementary IDs are not affected by changing only `MESH_SIZE` or using the
+HXT volume algorithm. They can change when:
+
+- A new STL is exported.
+- Cutting points or flow extensions change.
+- STL topology changes.
+- `ClassifySurfaces` settings change.
+- A different Gmsh version classifies the surface differently.
+
+Open the geometry on the same machine that creates the volume mesh:
+
+```bash
+gmsh meshes/postop/airways.geo
+```
+
+Use Gmsh's elementary-entity visibility controls to verify all four cap IDs. Do not run CFD if any cap is assigned to `wall`.
+
+## 12. Create a volume mesh
+
+Make the scripts executable once after cloning:
+
+```bash
+chmod +x create_volume_mesh.sh run_cfd.sh fetch_cfd_results.sh run_fine_cfd.sh
+```
+
+Create the baseline postoperative mesh with the default `0.25 mm` target size:
+
+```bash
+./create_volume_mesh.sh postop
+```
+
+Specify another target size through `MESH_SIZE`:
+
+```bash
+MESH_SIZE=0.15 ./create_volume_mesh.sh postop
+```
+
+The output is:
+
+```text
+openFOAM/postop/airways.msh
+```
+
+The script uses MSH 2.2 for `gmshToFoam` compatibility.
+
+A smaller characteristic length produces many more tetrahedra. For a geometrically similar 3D domain, reducing `0.25 mm` to `0.15 mm` may increase the cell count by approximately:
+
+```text
+(0.25 / 0.15)^3 ≈ 4.6
+```
+
+Inspect the generated mesh in Gmsh before transferring it:
+
+```bash
+gmsh openFOAM/postop/airways.msh
+```
+
+Generate the matched report panels for the accepted 0.25 and 0.15 mm HXT meshes
+with ParaView's Python runtime:
+
+```bash
+HOME=/tmp pvpython assignment/scripts/render_mesh_comparison.py \
+  openFOAM/postop_hxt_025/airways.msh \
+  openFOAM/postop_hxt_015/airways.msh
+```
+
+The script converts each MSH file to temporary VTK data using Gmsh and writes
+full and carina-close-up surface-mesh images under `report/report/figures/`. The camera,
+framing, representation, and edge styling are identical between mesh levels.
+These panels illustrate surface refinement; the cell counts and CFD sensitivity
+metrics remain the evidence for volume-mesh refinement.
+
+## 13. Run the postoperative transient workflow
+
+Assignment 6 reuses the selected `0.15 mm` HXT mesh from
+`results/postop_hxt_015/constant/polyMesh`. Generate the exact sinusoidal
+boundary table and prepare the local case with:
+
+```bash
+NPROCS=48 ./prepare_transient_case.sh postop_transient
+```
+
+The configured waveform has a 2 s period, 30 breaths/min, 66.7 mL tidal volume,
+and ±6.283 L/min peak flow. Positive flow is inspiration and negative flow is
+expiration. The case uses `pimpleFoam`, adaptive time stepping with `maxCo=2`,
+an initial `deltaT` of `1e-5 s`, and a maximum `deltaT` of `5e-5 s`. Linear
+systems retain an absolute tolerance of `1e-8`; the PIMPLE outer-loop stopping
+criteria are `2e-3` for velocity and `1e-2` for pressure.
+
+Run the short timing diagnostic before approaching peak flow:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --timing
+```
+
+This runs through `0.05 s`. Inspect
+`results/postop_transient/log.pimpleFoam.timing`, the extended `checkMesh` log,
+and `log.postProcess.CourantNo`. If the observed time-step behavior and
+convergence are acceptable, run the peak-flow pilot through `0.55 s`:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --pilot
+```
+
+Each mode prepares a clean case from time zero, uploads it, runs, calls
+`reconstructPar`, and fetches the reconstructed case. Only after accepting the
+peak-flow pilot run:
+
+```bash
+./run_transient_workflow.sh <DROPLET_IP> --full
+```
+
+The full mode starts cleanly from time zero and simulates one 2 s cycle; it does
+not continue the pilot. A single cycle starting from rest is not automatically
+periodic. If corresponding start/end or consecutive-cycle metrics differ beyond
+the chosen tolerance, extend the simulation to another cycle before reporting a
+final periodic cycle.
+
+### 13.1 Coarse-grid transient proof of concept
+
+If the selected \(0.15\,\mathrm{mm}\) transient case does not converge within the
+available time, use the preserved \(0.25\,\mathrm{mm}\) HXT mesh as an explicitly
+labelled proof of concept. Start with the timing run:
+
+```bash
+MAX_CO=2 MAX_DELTA_T=1e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --timing --coarse-poc
+```
+
+The `coarse-poc` profile creates the separate case
+`postop_transient_coarse_poc`; it never overwrites `postop_transient`. It uses
+`postop_hxt_025`, bounded first-order upwind convection, and two non-orthogonal
+correctors. Its conservative defaults are `maxCo=0.5` and `maxDeltaT=2e-5 s`,
+but the completed timing benchmark used the explicit overrides shown above. Preparation accepts either a
+fetched `results/postop_hxt_025/constant/polyMesh` or the preserved
+`openFOAM/postop_hxt_025/airways.msh`; the latter is converted and scaled on the
+compute host.
+
+Inspect the timing log before proceeding. If stable, run:
+
+```bash
+MAX_CO=2 MAX_DELTA_T=1e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --pilot --coarse-poc
+```
+
+Only attempt the complete cycle if the pilot remains stable:
+
+```bash
+MAX_CO=5 MAX_DELTA_T=2e-4 NPROCS=8 \
+  ./run_transient_workflow.sh <DROPLET_IP> --full --coarse-poc
+```
+
+Preserve the failed selected-mesh logs. Results from the coarse profile may
+support the waveform implementation, qualitative phase-dependent flow fields,
+and workflow demonstration, but must not be described as mesh-independent
+transient predictions. The coarse mesh has two severely non-orthogonal faces and
+showed mesh-dependent steady resistance.
+
+Open the fetched reconstruction with:
+
+```bash
+paraview results/postop_transient/postop_transient.foam
+# or the fallback case:
+paraview results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam
+```
+
+### 13.2 Post-process the completed transient proof of concept
+
+Parse the large solver log with the streaming parser and extract fixed-plane
+metrics at all reconstructed times:
+
+```bash
+python3 assignment/scripts/parse_transient_log.py \
+  results/postop_transient_coarse_poc/log.pimpleFoam.full
+
+HOME=/tmp pvpython assignment/scripts/extract_transient_metrics.py \
+  results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam
+```
+
+Generate the convergence and complete-cycle figures:
+
+```bash
+python3 assignment/scripts/generate_transient_figures.py
+```
+
+Render the three common-scale velocity-vector panels:
+
+```bash
+for specification in "0.24 024" "0.50 050" "1.50 150"; do
+  set -- $specification
+  HOME=/tmp pvpython assignment/scripts/render_flow_vectors.py \
+    results/postop_transient_coarse_poc/postop_transient_coarse_poc.foam \
+    --time "$1" --velocity-max 31 --glyph-stride 32 --glyph-scale 0.000113 \
+    --output "report/report/figures/assignment6_vectors_$2.png"
+done
+```
+
+The metric extractor masks resistance where the absolute section flow is below
+5% of its cycle peak. Do not interpret `R=DeltaP/Q` in those zero-flow intervals.
+
+## 14. Run OpenFOAM
+
+`run_cfd.sh` does not generate a Gmsh mesh. It requires an existing, verified:
+
+```text
+openFOAM/<case>/airways.msh
+```
+
+Run locally with Docker:
+
+```bash
+NPROCS=8 ./run_cfd.sh postop
+```
+
+The `NPROCS` value must match `numberOfSubdomains` in:
+
+```text
+openFOAM/<case>/system/decomposeParDict
+```
+
+The script performs:
+
+1. `gmshToFoam airways.msh`
+2. Scaling from millimetres to metres
+3. Validation of all five required boundary patches
+4. `checkMesh`
+5. Removal of stale nonzero time directories and old processor partitions
+6. `decomposePar -force`
+7. Parallel `simpleFoam`
+8. `reconstructPar`
+9. Final `checkMesh`
+
+MPI is invoked with:
+
+```text
+--allow-run-as-root --use-hwthread-cpus
+```
+
+This supports root execution inside Docker on a remote server.
+
+To open a locally completed case automatically:
+
+```bash
+./run_cfd.sh postop --visualize
+```
+
+## 15. Run a verified mesh on a remote host
+
+Transfer a locally generated and inspected mesh:
+
+```bash
+scp openFOAM/postop/airways.msh \
+    root@<DROPLET_IP>:/root/tracheomalacia_cfd/openFOAM/postop/
+```
+
+On the remote host:
+
+```bash
+cd /root/tracheomalacia_cfd
+NPROCS=60 ./run_cfd.sh postop
+```
+
+Before starting `simpleFoam`, the script refuses to proceed unless all five patches are present. The first `checkMesh` should report five boundary patches.
+
+## 16. Fetch remote results
+
+Fetch reconstructed results while excluding bulky `processor*/` directories:
+
+```bash
+./fetch_cfd_results.sh <DROPLET_IP> postop
+```
+
+A bare IP uses `root` by default. An explicit user can also be supplied:
+
+```bash
+./fetch_cfd_results.sh ubuntu@<DROPLET_IP> postop
+```
+
+For a non-default remote repository path:
+
+```bash
+REMOTE_REPO=/opt/tracheomalacia_cfd \
+    ./fetch_cfd_results.sh <DROPLET_IP> postop
+```
+
+The local result is written to:
+
+```text
+results/postop/
+```
+
+Open it with:
+
+```bash
+paraview results/postop/postop.foam
+```
+
+The fetch uses `rsync --delete`, so stale local time directories from older boundary configurations are removed.
+
+## 17. Automated fine-mesh experiment
+
+`run_fine_cfd.sh` performs the entire fine-mesh comparison workflow:
+
+1. Recreates local `openFOAM/postop_fine` from the baseline `postop` dictionaries.
+2. Removes the inherited OpenFOAM mesh.
+3. Sets `numberOfSubdomains` to `NPROCS`.
+4. Generates a fine Gmsh mesh locally.
+5. Transfers the current `run_cfd.sh` and fine case to the remote host.
+6. Runs the fine simulation remotely.
+7. Fetches reconstructed results into `results/postop_fine`.
+8. Optionally opens ParaView.
+
+Default run:
+
+```bash
+./run_fine_cfd.sh <DROPLET_IP>
+```
+
+Defaults:
+
+```text
+BASE_CASE=postop
+FINE_CASE=postop_fine
+MESH_SIZE=0.15 mm
+NPROCS=60
+REMOTE_USER=root
+REMOTE_REPO=/root/tracheomalacia_cfd
+```
+
+Override settings as needed:
+
+```bash
+MESH_SIZE=0.12 NPROCS=60 \
+    ./run_fine_cfd.sh <DROPLET_IP>
+```
+
+Run and open the downloaded result automatically:
+
+```bash
+./run_fine_cfd.sh <DROPLET_IP> --visualize
+```
+
+The script intentionally deletes and recreates the generated `openFOAM/postop_fine` case locally and remotely. It does not modify the baseline `openFOAM/postop` case or `results/postop`.
+
+## 18. Mesh-sensitivity comparison
+
+Compare the baseline and refined cases in ParaView:
+
+```bash
+paraview \
+    results/postop/postop.foam \
+    results/postop_fine/postop_fine.foam
+```
+
+Useful comparison quantities include:
+
+- Pressure drop from inlet to outlets
+- Peak velocity, especially through stenotic regions
+- Outlet flow split
+- Cross-sectional velocity profiles
+- Wall-adjacent velocity gradients
+- Integrated inlet and outlet flow rates
+
+Visual similarity is not sufficient to establish mesh independence. Compare
+integral quantities and report their relative changes between mesh levels. In
+this project the 0.15 mm HXT case was selected as the accuracy/cost compromise;
+the unconverged 0.12 mm case is a sensitivity comparator rather than a truth
+solution.
+
+Render the archived resistance-plane definitions on the selected postoperative
+0.15 mm HXT mesh with:
+
+```bash
+HOME=/tmp pvpython assignment/scripts/render_resistance_planes.py \
+  results/postop_hxt_015/airways.msh
+```
+
+This reads `assignment/data/resistance_sections.json`, converts its metre-based
+origins to the millimetre coordinates of the selected Gmsh mesh, and writes
+`report/report/figures/assignment4_resistance_planes.png`. Blue denotes the superior
+upstream plane and orange the inferior downstream plane.
+
+## 19. Reproducibility and generated files
+
+The verified baseline mesh can be committed at:
+
+```text
+openFOAM/postop/airways.msh
+```
+
+Downloaded results and the generated fine-case workspace are ignored:
+
+```text
+results/
+openFOAM/postop_fine/
+```
+
+If committed mesh files exceed the hosting provider's file-size limit, use Git LFS:
+
+```bash
+git lfs install
+git lfs track "openFOAM/*/airways.msh"
+git add .gitattributes
+```
+
+Record the following for every reported simulation:
+
+- Git commit
+- Anatomical case
+- STL version
+- Gmsh version
+- OpenFOAM Docker image/version
+- `MESH_SIZE`
+- Cell count and `checkMesh` summary
+- `NPROCS`
+- Boundary-condition settings
+- Solver convergence criteria

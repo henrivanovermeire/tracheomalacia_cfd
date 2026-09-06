@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "privacy": "Only non-identifying geometry and acquisition descriptors are retained.",
+  "preop": {
+    "file_count": 192,
+    "voxel_dimensions": [
+      512,
+      512,
+      192
+    ],
+    "pixel_spacing_mm": [
+      0.300781,
+      0.300781
+    ],
+    "mean_slice_spacing_mm_from_positions": 0.625,
+    "slice_thickness_mm": 0.625,
+    "series_description": "LONG DL_M FIJN PACS",
+    "protocol_name": "5.7 5.17 THORAX HEL PEDIATRIE 0 - 12 MAANDEN",
+    "body_part_examined": "CHEST",
+    "respiratory_phase": "not explicitly recorded in inspected standard tags"
+  },
+  "postop": {
+    "file_count": 203,
+    "voxel_dimensions": [
+      512,
+      512,
+      203
+    ],
+    "pixel_spacing_mm": [
+      0.351562,
+      0.351562
+    ],
+    "mean_slice_spacing_mm_from_positions": 0.7000000000000004,
+    "slice_thickness_mm": 1.0,
+    "series_description": "3 Fl-Thx Parenchyma TSS",
+    "protocol_name": "C3_Flash_Thorax_SAF_LD",
+    "body_part_examined": "CHEST",
+    "respiratory_phase": "not explicitly recorded in inspected standard tags"
+  }
+}

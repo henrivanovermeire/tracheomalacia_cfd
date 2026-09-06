@@ -195,9 +195,9 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#   and can be added to the global gitignore or merged into this file. However, if you prefer,
 #   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
 # Temporary file for partial code execution
@@ -216,3 +216,35 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# LaTeX build intermediates (the generated report PDF is retained).
+report/report/*.aux
+report/report/*.log
+report/report/*.out
+report/report/*.toc
+report/report/*.lof
+report/report/*.lot
+report/report/figures/*.aux
+report/report/figures/*.log
+report/presentation/*.aux
+report/presentation/*.log
+report/presentation/*.nav
+report/presentation/*.out
+report/presentation/*.snm
+report/presentation/*.toc
+
+# Downloaded CFD results and generated comparison cases are local artifacts.
+results/
+openFOAM/postop_fine/
+
+# Include only run files for openFOAM; exclude solutions.
+# Ignore everything in the OpenFOAM case
+openFOAM/postop/*
+
+# Keep required case directories
+!openFOAM/postop/0/
+!openFOAM/postop/constant/
+!openFOAM/postop/system/
+
+# Keep the verified Gmsh input mesh for reproducible CFD runs.
+!openFOAM/postop/airways.msh
